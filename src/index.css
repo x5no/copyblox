@@ -1,0 +1,74 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 2%;
+    --foreground: 0 0% 100%;
+
+    --card: 0 0% 3%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 0 0% 3%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 271 91% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 270 30% 15%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 270 30% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 271 91% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 270 30% 15%;
+    --input: 270 30% 15%;
+    --ring: 271 91% 65%;
+
+    --blox-card: 0 0% 5%;
+    --dashboard-glow: 271 91% 65%;
+    --gradient-dashboard: radial-gradient(circle at 92% 0%, hsl(var(--dashboard-glow) / 0.32) 0%, hsl(var(--dashboard-glow) / 0.14) 22%, transparent 46%), hsl(var(--background));
+    --gradient-site: linear-gradient(135deg, hsl(0 0% 7%) 0%, hsl(276 58% 17%) 100%);
+
+    --radius: 0.75rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-blox-gradient text-foreground;
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: hsl(var(--background));
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Sora', system-ui, -apple-system, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  .blox-card {
+    @apply bg-card rounded-xl border border-primary/10 shadow-[0_18px_60px_hsl(var(--primary)/0.08)];
+  }
+  
+  .blox-button {
+    @apply bg-blox-teal text-white px-6 py-3 rounded-full font-medium hover:brightness-110 transition-all flex items-center gap-2;
+  }
+}

