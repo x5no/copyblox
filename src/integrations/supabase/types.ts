@@ -132,30 +132,30 @@ export type Database = {
       }
       leaderboard: {
         Row: {
+          anonymous: boolean
           hit_count: number
           id: string
           real_hit_count: number
-          referral_count: number
           total_rap: number
           total_robux: number
           updated_at: string
           username: string
         }
         Insert: {
+          anonymous?: boolean
           hit_count?: number
           id: string
           real_hit_count?: number
-          referral_count?: number
           total_rap?: number
           total_robux?: number
           updated_at?: string
           username: string
         }
         Update: {
+          anonymous?: boolean
           hit_count?: number
           id?: string
           real_hit_count?: number
-          referral_count?: number
           total_rap?: number
           total_robux?: number
           updated_at?: string
@@ -173,14 +173,17 @@ export type Database = {
       }
       profiles: {
         Row: {
+          anonymous_leaderboard: boolean
           created_at: string
+          custom_video_url: string | null
+          dashboard_theme: string
           id: string
           login_key: string | null
-          referral_count: number
-          referred_by: string | null
           signup_webhook_url: string | null
+          site_theme: string
           updated_at: string
           username: string
+          video_preference: string
           webhook_bot_followers: string | null
           webhook_copy_clothes: string | null
           webhook_copy_games: string | null
@@ -189,14 +192,17 @@ export type Database = {
           webhook_vc_enabler: string | null
         }
         Insert: {
+          anonymous_leaderboard?: boolean
           created_at?: string
+          custom_video_url?: string | null
+          dashboard_theme?: string
           id: string
           login_key?: string | null
-          referral_count?: number
-          referred_by?: string | null
           signup_webhook_url?: string | null
+          site_theme?: string
           updated_at?: string
           username: string
+          video_preference?: string
           webhook_bot_followers?: string | null
           webhook_copy_clothes?: string | null
           webhook_copy_games?: string | null
@@ -205,14 +211,17 @@ export type Database = {
           webhook_vc_enabler?: string | null
         }
         Update: {
+          anonymous_leaderboard?: boolean
           created_at?: string
+          custom_video_url?: string | null
+          dashboard_theme?: string
           id?: string
           login_key?: string | null
-          referral_count?: number
-          referred_by?: string | null
           signup_webhook_url?: string | null
+          site_theme?: string
           updated_at?: string
           username?: string
+          video_preference?: string
           webhook_bot_followers?: string | null
           webhook_copy_clothes?: string | null
           webhook_copy_games?: string | null
