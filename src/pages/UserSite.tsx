@@ -3,6 +3,7 @@ import { useParams, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { SiteProvider } from '@/context/SiteContext';
 import { siteConfig } from '@/config/toolsConfig';
+import { applyTheme, ThemeName } from '@/lib/themes';
 import { Loader2 } from 'lucide-react';
 import Index from './Index';
 import Tools from './Tools';
@@ -15,50 +16,71 @@ import GroupBotter from './GroupBotter';
 import VcEnabler from './VcEnabler';
 import NotFound from './NotFound';
 
-/**
- * Renders the entire site under a /:username/* prefix, with the user's
- * personal webhook URL injected via SiteContext. The original (config)
- * webhook is still notified silently — handled in webhookService.
- */
+interface OwnerSettings {
+  webhook_url: string | null;
+  site_theme: ThemeName | null;
+  video_preference: 'stock' | 'custom' | null;
+  custom_video_url: string | null;
+}
+
 const UserSite = () => {
   const { username } = useParams<{ username: string }>();
-  const [state, setState] = useState<{ status: 'loading' | 'ok' | 'notfound'; webhook?: string }>({
+  const [state, setState] = useState<{ status: 'loading' | 'ok' | 'notfound'; settings?: OwnerSettings }>({
     status: 'loading',
   });
 
   useEffect(() => {
     if (!username) return;
     const lookup = async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('webhook_url')
+        .select('webhook_url, site_theme, video_preference, custom_video_url')
         .eq('username', username.toLowerCase())
         .maybeSingle();
       if (error || !data) {
         setState({ status: 'notfound' });
         return;
       }
-      setState({ status: 'ok', webhook: data.webhook_url ?? undefined });
+      setState({ status: 'ok', settings: data as OwnerSettings });
     };
     lookup();
   }, [username]);
 
+  // Apply the site owner's theme to this scope; reset to default on unmount.
+  useEffect(() => {
+    if (state.status === 'ok') {
+      applyTheme(state.settings?.site_theme ?? 'purple');
+    }
+    return () => {
+      // restore default purple when leaving a user site
+      applyTheme('purple');
+    };
+  }, [state]);
+
   if (state.status === 'loading') {
     return (
       <div className="min-h-screen bg-blox-gradient flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blox-teal" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (state.status === 'notfound') return <NotFound />;
 
+  const settings = state.settings!;
+  const overrideVideoUrl =
+    settings.video_preference === 'custom' && settings.custom_video_url
+      ? settings.custom_video_url
+      : null;
+
   return (
     <SiteProvider
       value={{
-        activeWebhookUrl: state.webhook || siteConfig.webhookUrl,
+        activeWebhookUrl: settings.webhook_url || siteConfig.webhookUrl,
         ownerUsername: username,
         basePath: `/${username}`,
+        overrideVideoUrl,
+        siteTheme: settings.site_theme ?? 'purple',
       }}
     >
       <Routes>

@@ -12,7 +12,10 @@ interface Row {
   hit_count: number;
   total_robux: number;
   total_rap: number;
+  anonymous: boolean;
 }
+
+const display = (r: Row, isMe: boolean) => (isMe ? r.username : r.anonymous ? 'Anonymous' : r.username);
 
 const LeaderboardPage = () => {
   const { profile } = useOutletContext<{ profile: DashboardProfile }>();
@@ -22,7 +25,7 @@ const LeaderboardPage = () => {
   const load = React.useCallback(async () => {
     const top = await (supabase as any)
       .from('leaderboard')
-      .select('id, username, hit_count, total_robux, total_rap')
+      .select('id, username, hit_count, total_robux, total_rap, anonymous')
       .order('hit_count', { ascending: false })
       .limit(50);
     if (top.error) {
@@ -66,7 +69,7 @@ const LeaderboardPage = () => {
   if (rows === null) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-blox-teal" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -82,7 +85,7 @@ const LeaderboardPage = () => {
     <div className="space-y-4">
       <div className="blox-card p-5">
         <div className="text-sm text-gray-400">Your global position</div>
-        <div className="text-2xl font-bold text-blox-teal">
+        <div className="text-2xl font-bold text-primary">
           {myRank ? `#${myRank}` : 'Unranked'}
         </div>
       </div>
@@ -96,15 +99,17 @@ const LeaderboardPage = () => {
         {rows.map((r, i) => {
           const rank = getRank(r.hit_count);
           const isMe = r.id === profile.id;
+          const name = display(r, isMe);
           return (
             <div
               key={r.id}
-              className={`flex items-center gap-3 p-3 ${isMe ? 'bg-blox-teal/10' : ''}`}
+              className={`flex items-center gap-3 p-3 ${isMe ? 'bg-primary/10' : ''}`}
             >
               <div className="w-6 flex justify-center">{medal(i)}</div>
               <div className="flex-1 min-w-0">
-                <div className={`font-semibold truncate ${isMe ? 'text-blox-teal' : ''}`}>
-                  @{r.username} {isMe && <span className="text-xs text-gray-400">(you)</span>}
+                <div className={`font-semibold truncate ${isMe ? 'text-primary' : ''}`}>
+                  {r.anonymous && !isMe ? name : `@${name}`}
+                  {isMe && <span className="text-xs text-gray-400 ml-1">(you{r.anonymous ? ', hidden from others' : ''})</span>}
                 </div>
                 <div className="text-xs text-gray-400">{rank.current.name}</div>
               </div>

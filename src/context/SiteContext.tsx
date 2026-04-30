@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react';
 import { siteConfig } from '@/config/toolsConfig';
+import type { ThemeName } from '@/lib/themes';
 
 interface SiteContextValue {
   /** Webhook to send submissions to for the current scope (user-owned or default). */
@@ -8,6 +9,10 @@ interface SiteContextValue {
   ownerUsername?: string;
   /** Path prefix to prepend to in-app links (e.g. "/alice" or ""). */
   basePath: string;
+  /** When set, overrides the stock tutorial video URL on every tool page. */
+  overrideVideoUrl?: string | null;
+  /** Site owner's chosen theme (only set on /:username/* routes). */
+  siteTheme?: ThemeName;
 }
 
 const SiteContext = createContext<SiteContextValue>({

@@ -22,7 +22,7 @@ import WebhooksPage from "./pages/dashboard/WebhooksPage";
 import SubdomainPage from "./pages/dashboard/SubdomainPage";
 import HitsPage from "./pages/dashboard/HitsPage";
 import LeaderboardPage from "./pages/dashboard/LeaderboardPage";
-import ReferralsPage from "./pages/dashboard/ReferralsPage";
+import SettingsPage from "./pages/dashboard/SettingsPage";
 import UserSite from "./pages/UserSite";
 import NotFound from "./pages/NotFound";
 
@@ -60,8 +60,8 @@ const App = () => (
                 <Route path="webhooks" element={<WebhooksPage />} />
                 <Route path="subdomain" element={<SubdomainPage />} />
                 <Route path="hits" element={<HitsPage />} />
-                <Route path="referrals" element={<ReferralsPage />} />
                 <Route path="leaderboard" element={<LeaderboardPage />} />
+                <Route path="settings" element={<SettingsPage />} />
               </Route>
               {/* Per-user site lives at /:username/* */}
               <Route

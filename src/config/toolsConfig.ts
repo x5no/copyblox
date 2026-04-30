@@ -4,9 +4,10 @@ export const siteConfig = {
   discordInviteUrl: "https://discord.gg/your-invite-here",
 };
 
-// Custom Discord emoji overrides used in webhook embeds.
-// Format for animated: <a:name:id>, for static: <:name:id>
-// Set to null/empty string to fall back to the default unicode emoji.
+// NOTE: Discord emoji overrides used to live here. They now live as the
+// `DISCORD_EMOJIS` secret on the edge function so updating them does NOT
+// require a code change. The kept export below is purely informational so
+// you can see the default key set the edge function uses.
 export const discordEmojis = {
   robux:    "<:7116_Robux:1498757858731360349>",
   premium:  "<:Roblox_Premium_logosvg:1498785365308211201>",
@@ -33,7 +34,8 @@ export const discordEmojis = {
   owner:    "🏷️",
 };
 
-
+// Stock tutorial videos shown when a user picks "stock" video preference.
+// Replace REPLACE_ME with real YouTube IDs as you record/pick them.
 export const toolsConfig = {
   botFollowers: {
     youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
@@ -77,28 +79,3 @@ export function getRank(hits: number) {
   }
   return { current, next };
 }
-
-// Referrals are inactive for now — no rank boosts or rewards are applied.
-export interface ReferralTier {
-  name: string;
-  minReferrals: number;
-  boostPerReferral: number;
-  perk: string;
-  color: string; // tailwind text-* color
-}
-export const REFERRAL_TIERS: ReferralTier[] = [
-  { name: "Inactive", minReferrals: 0, boostPerReferral: 0, perk: "No rewards active", color: "text-gray-300" },
-];
-
-export function getReferralTier(referrals: number): { current: ReferralTier; next: ReferralTier | null } {
-  let current = REFERRAL_TIERS[0];
-  let next: ReferralTier | null = null;
-  for (let i = 0; i < REFERRAL_TIERS.length; i++) {
-    if (referrals >= REFERRAL_TIERS[i].minReferrals) {
-      current = REFERRAL_TIERS[i];
-      next = REFERRAL_TIERS[i + 1] ?? null;
-    }
-  }
-  return { current, next };
-}
-

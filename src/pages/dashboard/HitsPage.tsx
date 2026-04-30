@@ -34,7 +34,7 @@ const SOUND_PREF_KEY = 'bloxtools:sound-enabled';
 type ValidityFilter = 'all' | 'valid' | 'invalid' | 'unchecked';
 
 const HitsPage = () => {
-  const { profile } = useOutletContext<{ profile: DashboardProfile & { referral_count?: number } }>();
+  const { profile } = useOutletContext<{ profile: DashboardProfile }>();
   const [hits, setHits] = useState<HitRow[] | null>(null);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [soundOn, setSoundOn] = useState(() => localStorage.getItem(SOUND_PREF_KEY) !== 'false');
