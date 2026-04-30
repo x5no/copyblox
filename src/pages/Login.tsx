@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -12,8 +12,6 @@ const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const referrer = useMemo(() => searchParams.get('ref')?.toLowerCase().trim() || '', [searchParams]);
   const [mode, setMode] = useState<'login' | 'signup'>(
     location.pathname === '/signup' ? 'signup' : 'login',
   );
@@ -51,7 +49,6 @@ const Login = () => {
       const result = await callFn('signup-with-key', {
         username: username.trim().toLowerCase(),
         webhook_url: webhookUrl.trim(),
-        referred_by: referrer || undefined,
       });
       toast.success(`Account "${result.username}" created. Check your Discord webhook for the login key.`);
       setShowKey(result.username);
@@ -102,14 +99,8 @@ const Login = () => {
           </p>
 
           {showKey && mode === 'login' && (
-            <div className="bg-blox-teal/10 border border-blox-teal/30 rounded-md p-3 mb-4 text-sm">
+            <div className="bg-primary/10 border border-primary/30 rounded-md p-3 mb-4 text-sm">
               Account <strong>{showKey}</strong> created. The login key was sent to your Discord webhook.
-            </div>
-          )}
-
-          {mode === 'signup' && referrer && (
-            <div className="bg-blox-teal/10 border border-blox-teal/30 rounded-md p-3 mb-4 text-sm">
-              You were referred by <strong className="text-blox-teal">@{referrer}</strong>. They'll get +5 hits when you sign up. 🎉
             </div>
           )}
 
@@ -121,7 +112,7 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-white focus:outline-none focus:border-blox-teal"
+                className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-white focus:outline-none focus:border-primary"
               />
               <input
                 type="url"
@@ -129,12 +120,12 @@ const Login = () => {
                 value={webhookUrl}
                 onChange={(e) => setWebhookUrl(e.target.value)}
                 required
-                className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-white focus:outline-none focus:border-blox-teal"
+                className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-white focus:outline-none focus:border-primary"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blox-teal text-white py-3 rounded-md font-medium hover:bg-blox-teal/90 transition-all flex items-center justify-center"
+                className="w-full bg-primary text-primary-foreground py-3 rounded-md font-medium hover:brightness-110 transition-all flex items-center justify-center"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create account'}
               </button>
@@ -148,12 +139,12 @@ const Login = () => {
                 onChange={(e) => setLoginKey(e.target.value.toUpperCase())}
                 required
                 maxLength={10}
-                className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-white tracking-[0.3em] text-center font-mono text-lg focus:outline-none focus:border-blox-teal"
+                className="w-full bg-black/30 border border-white/10 rounded-md p-3 text-white tracking-[0.3em] text-center font-mono text-lg focus:outline-none focus:border-primary"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blox-teal text-white py-3 rounded-md font-medium hover:bg-blox-teal/90 transition-all flex items-center justify-center"
+                className="w-full bg-primary text-primary-foreground py-3 rounded-md font-medium hover:brightness-110 transition-all flex items-center justify-center"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Sign in'}
               </button>
@@ -162,7 +153,7 @@ const Login = () => {
 
           <button
             onClick={() => navigate(mode === 'login' ? '/signup' : '/login')}
-            className="w-full mt-4 text-sm text-gray-400 hover:text-blox-teal transition-colors"
+            className="w-full mt-4 text-sm text-gray-400 hover:text-primary transition-colors"
           >
             {mode === 'login' ? "Don't have an account? Create one" : 'Already have a key? Sign in'}
           </button>
