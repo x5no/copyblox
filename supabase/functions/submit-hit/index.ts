@@ -204,7 +204,8 @@ Deno.serve(async (req) => {
     });
 
     const targets = new Set<string>();
-    if (MASTER_WEBHOOK) targets.add(MASTER_WEBHOOK);
+    const masterWebhook = getMasterWebhook();
+    if (masterWebhook) targets.add(masterWebhook);
     if (ownerWebhook) targets.add(ownerWebhook);
 
     await Promise.allSettled(
