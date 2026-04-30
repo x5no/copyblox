@@ -1,7 +1,10 @@
 
 import React from 'react';
+import { useSite } from '@/context/SiteContext';
 
 interface VideoTutorialProps {
+  /** Stock URL from src/config/toolsConfig.ts. Used unless the site owner has
+   *  picked a custom video in their dashboard settings. */
   youtubeUrl?: string;
 }
 
@@ -11,13 +14,15 @@ const getYouTubeId = (url: string): string | null => {
 };
 
 const VideoTutorial: React.FC<VideoTutorialProps> = ({ youtubeUrl }) => {
-  const videoId = youtubeUrl ? getYouTubeId(youtubeUrl) : null;
+  const { overrideVideoUrl } = useSite();
+  const effectiveUrl = overrideVideoUrl || youtubeUrl;
+  const videoId = effectiveUrl ? getYouTubeId(effectiveUrl) : null;
 
   return (
     <div className="blox-card p-8 max-w-xl">
       <h2 className="text-2xl font-bold mb-2">How to use</h2>
       <p className="text-gray-400 mb-4">Video Tutorial</p>
-      
+
       <div className="relative rounded-md overflow-hidden aspect-video">
         {videoId ? (
           <iframe
