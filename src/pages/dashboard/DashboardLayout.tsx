@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, LogOut, Link as LinkIcon, Webhook, AtSign, Activity, Trophy, Users } from 'lucide-react';
+import { Loader2, LogOut, Link as LinkIcon, Webhook, AtSign, Activity, Trophy, Settings } from 'lucide-react';
 import { siteConfig } from '@/config/toolsConfig';
+import { applyTheme, ThemeName } from '@/lib/themes';
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +28,11 @@ export interface DashboardProfile {
   webhook_copy_clothes: string | null;
   webhook_group_botter: string | null;
   webhook_vc_enabler: string | null;
-  referral_count?: number;
+  dashboard_theme?: ThemeName;
+  site_theme?: ThemeName;
+  anonymous_leaderboard?: boolean;
+  video_preference?: 'stock' | 'custom';
+  custom_video_url?: string | null;
 }
 
 interface OutletCtx {
@@ -40,8 +45,8 @@ const items = [
   { to: '/dashboard/webhooks', end: false, label: 'Webhooks', icon: Webhook },
   { to: '/dashboard/subdomain', end: false, label: 'Subdomain', icon: AtSign },
   { to: '/dashboard/hits', end: false, label: 'Hits', icon: Activity },
-  { to: '/dashboard/referrals', end: false, label: 'Referrals', icon: Users },
   { to: '/dashboard/leaderboard', end: false, label: 'Leaderboard', icon: Trophy },
+  { to: '/dashboard/settings', end: false, label: 'Settings', icon: Settings },
 ];
 
 const DashboardLayout = () => {
@@ -56,17 +61,25 @@ const DashboardLayout = () => {
         navigate('/login', { replace: true });
         return;
       }
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler, referral_count')
+        .select('id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler, dashboard_theme, site_theme, anonymous_leaderboard, video_preference, custom_video_url')
         .eq('id', sess.session.user.id)
         .maybeSingle();
       if (error) toast.error(error.message);
-      if (data) setProfile(data as DashboardProfile);
+      if (data) {
+        setProfile(data as DashboardProfile);
+        applyTheme((data as DashboardProfile).dashboard_theme);
+      }
       setLoading(false);
     };
     init();
   }, [navigate]);
+
+  // Re-apply theme any time it changes
+  useEffect(() => {
+    if (profile?.dashboard_theme) applyTheme(profile.dashboard_theme);
+  }, [profile?.dashboard_theme]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -76,7 +89,7 @@ const DashboardLayout = () => {
   if (loading || !profile) {
     return (
       <div className="min-h-screen bg-blox-gradient flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blox-teal" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
