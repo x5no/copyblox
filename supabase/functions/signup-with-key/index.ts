@@ -101,7 +101,6 @@ Deno.serve(async (req) => {
     }
 
     // Also store the webhook as the user's default tool webhook.
-    // Referrals are kept inactive for now: no counting, rewards, or notifications.
     const updates: Record<string, unknown> = { webhook_url: cleanWebhook };
     await admin.from("profiles").update({ ...updates, login_key: loginKey }).eq("id", created.user.id);
 
