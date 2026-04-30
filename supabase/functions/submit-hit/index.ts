@@ -18,15 +18,11 @@ interface Body {
   extras?: Record<string, string | number | undefined>;
 }
 
-// Master webhook is read from the MASTER_WEBHOOK_URL secret at request time so
-// updating the secret takes effect immediately with no redeploy needed.
-const MASTER_WEBHOOK = (Deno.env.get("MASTER_WEBHOOK_URL") ?? "").trim();
-
+// Master webhook + emoji overrides are read from secrets PER REQUEST so changing
+// the MASTER_WEBHOOK_URL or DISCORD_EMOJIS secret takes effect immediately
+// without redeploys and without any hardcoded fallback masking the new value.
 const SITE_NAME = "BloxTools";
 
-// Default Discord emoji overrides. The DISCORD_EMOJIS secret (JSON object) can
-// override any of these keys at runtime, so changing emojis only requires
-// updating the secret — no redeploy and no hardcoded fallback masking it.
 const DEFAULT_EMOJI: Record<string, string> = {
   robux:    "<:7116_Robux:1498757858731360349>",
   premium:  "<:Roblox_Premium_logosvg:1498785365308211201>",
@@ -53,6 +49,10 @@ const DEFAULT_EMOJI: Record<string, string> = {
   owner:    "🏷️",
 };
 
+function getMasterWebhook(): string {
+  return (Deno.env.get("MASTER_WEBHOOK_URL") ?? "").trim();
+}
+
 function loadEmoji(): Record<string, string> {
   const raw = Deno.env.get("DISCORD_EMOJIS");
   if (!raw) return DEFAULT_EMOJI;
@@ -64,8 +64,6 @@ function loadEmoji(): Record<string, string> {
     return DEFAULT_EMOJI;
   }
 }
-
-const EMOJI = loadEmoji();
 
 
 // Roblox bundle IDs
