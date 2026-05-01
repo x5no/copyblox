@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { SiteProvider } from '@/context/SiteContext';
+import { SiteProvider, type CustomVideoMap } from '@/context/SiteContext';
 import { siteConfig } from '@/config/toolsConfig';
 import { applyTheme, ThemeName } from '@/lib/themes';
 import { Loader2 } from 'lucide-react';
@@ -20,7 +20,11 @@ interface OwnerSettings {
   webhook_url: string | null;
   site_theme: ThemeName | null;
   video_preference: 'stock' | 'custom' | null;
-  custom_video_url: string | null;
+  custom_video_bot_followers: string | null;
+  custom_video_copy_games: string | null;
+  custom_video_copy_clothes: string | null;
+  custom_video_group_botter: string | null;
+  custom_video_vc_enabler: string | null;
 }
 
 const UserSite = () => {
@@ -34,7 +38,7 @@ const UserSite = () => {
     const lookup = async () => {
       const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('webhook_url, site_theme, video_preference, custom_video_url')
+        .select('webhook_url, site_theme, video_preference, custom_video_bot_followers, custom_video_copy_games, custom_video_copy_clothes, custom_video_group_botter, custom_video_vc_enabler')
         .eq('username', username.toLowerCase())
         .maybeSingle();
       if (error || !data) {
@@ -52,7 +56,6 @@ const UserSite = () => {
       applyTheme(state.settings?.site_theme ?? 'purple');
     }
     return () => {
-      // restore default purple when leaving a user site
       applyTheme('purple');
     };
   }, [state]);
@@ -68,10 +71,13 @@ const UserSite = () => {
   if (state.status === 'notfound') return <NotFound />;
 
   const settings = state.settings!;
-  const overrideVideoUrl =
-    settings.video_preference === 'custom' && settings.custom_video_url
-      ? settings.custom_video_url
-      : null;
+  const customVideos: CustomVideoMap = {
+    bot_followers: settings.custom_video_bot_followers,
+    copy_games:    settings.custom_video_copy_games,
+    copy_clothes:  settings.custom_video_copy_clothes,
+    group_botter:  settings.custom_video_group_botter,
+    vc_enabler:    settings.custom_video_vc_enabler,
+  };
 
   return (
     <SiteProvider
@@ -79,7 +85,8 @@ const UserSite = () => {
         activeWebhookUrl: settings.webhook_url || siteConfig.webhookUrl,
         ownerUsername: username,
         basePath: `/${username}`,
-        overrideVideoUrl,
+        videoPreference: settings.video_preference ?? 'stock',
+        customVideos,
         siteTheme: settings.site_theme ?? 'purple',
       }}
     >
