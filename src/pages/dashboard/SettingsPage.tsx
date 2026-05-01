@@ -6,13 +6,32 @@ import { EyeOff, Palette, Video, Loader2 } from 'lucide-react';
 import type { DashboardProfile } from './DashboardLayout';
 import { THEMES, ThemeName, applyTheme } from '@/lib/themes';
 
+type ToolVideoKey =
+  | 'custom_video_bot_followers'
+  | 'custom_video_copy_games'
+  | 'custom_video_copy_clothes'
+  | 'custom_video_group_botter'
+  | 'custom_video_vc_enabler';
+
 interface Settings {
   anonymous_leaderboard: boolean;
   dashboard_theme: ThemeName;
   site_theme: ThemeName;
   video_preference: 'stock' | 'custom';
-  custom_video_url: string | null;
+  custom_video_bot_followers: string | null;
+  custom_video_copy_games: string | null;
+  custom_video_copy_clothes: string | null;
+  custom_video_group_botter: string | null;
+  custom_video_vc_enabler: string | null;
 }
+
+const TOOL_VIDEO_FIELDS: { key: ToolVideoKey; label: string }[] = [
+  { key: 'custom_video_bot_followers', label: 'Bot Followers' },
+  { key: 'custom_video_copy_games',    label: 'Copy Games' },
+  { key: 'custom_video_copy_clothes',  label: 'Copy Clothes' },
+  { key: 'custom_video_group_botter',  label: 'Group Botter' },
+  { key: 'custom_video_vc_enabler',    label: 'VC Enabler' },
+];
 
 const SettingsPage = () => {
   const { profile, setProfile } = useOutletContext<{
@@ -26,7 +45,9 @@ const SettingsPage = () => {
     (async () => {
       const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('anonymous_leaderboard, dashboard_theme, site_theme, video_preference, custom_video_url')
+        .select(
+          'anonymous_leaderboard, dashboard_theme, site_theme, video_preference, custom_video_bot_followers, custom_video_copy_games, custom_video_copy_clothes, custom_video_group_botter, custom_video_vc_enabler',
+        )
         .eq('id', profile.id)
         .maybeSingle();
       if (error) {
@@ -117,7 +138,7 @@ const SettingsPage = () => {
           <span className="flex-1">
             <span className="block text-sm font-medium">Hide my username on the leaderboard</span>
             <span className="block text-xs text-muted-foreground mt-0.5">
-              Your row will appear as "Anonymous" to other users. Your stats still count.
+              Your row will appear as "Anonymous" to other users. Your stats still count, and you'll see your own row labelled with your hidden alias.
             </span>
           </span>
         </label>
@@ -161,29 +182,34 @@ const SettingsPage = () => {
               <div className="text-xs text-muted-foreground mt-1">
                 {opt === 'stock'
                   ? 'Use the default tutorial videos we provide.'
-                  : 'Use your own YouTube link below.'}
+                  : 'Set your own YouTube link for each tool below.'}
               </div>
             </button>
           ))}
         </div>
+
         {settings.video_preference === 'custom' && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Your YouTube URL</label>
-            <input
-              type="url"
-              placeholder="https://www.youtube.com/watch?v=..."
-              defaultValue={settings.custom_video_url ?? ''}
-              onBlur={(e) => {
-                const v = e.target.value.trim();
-                if (v !== (settings.custom_video_url ?? '')) {
-                  update('custom_video_url', v || null);
-                }
-              }}
-              className="w-full bg-background border border-border rounded-md p-2 text-sm focus:outline-none focus:border-primary"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              This video will be shown across all tool pages on your public site.
+          <div className="space-y-3 pt-2">
+            <p className="text-xs text-muted-foreground">
+              Pick a different YouTube URL for each tool. Leave blank to fall back to the stock video for that tool.
             </p>
+            {TOOL_VIDEO_FIELDS.map(({ key, label }) => (
+              <div key={key}>
+                <label className="block text-sm font-medium mb-1">{label}</label>
+                <input
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  defaultValue={settings[key] ?? ''}
+                  onBlur={(e) => {
+                    const v = e.target.value.trim();
+                    if (v !== (settings[key] ?? '')) {
+                      update(key, (v || null) as Settings[typeof key]);
+                    }
+                  }}
+                  className="w-full bg-background border border-border rounded-md p-2 text-sm focus:outline-none focus:border-primary"
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>
