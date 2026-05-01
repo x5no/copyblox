@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, Trophy, Medal } from 'lucide-react';
+import { Loader2, Trophy, Medal, Sparkles } from 'lucide-react';
 import type { DashboardProfile } from './DashboardLayout';
 import { getRank } from '@/config/toolsConfig';
 
@@ -13,9 +13,16 @@ interface Row {
   total_robux: number;
   total_rap: number;
   anonymous: boolean;
+  is_golden: boolean;
 }
 
-const display = (r: Row, isMe: boolean) => (isMe ? r.username : r.anonymous ? 'Anonymous' : r.username);
+// Build a stable per-user "anonymous alias" so the owner can recognise their
+// own row even when it shows as Anonymous to the rest of the world.
+const aliasFor = (id: string) => {
+  // 6-char hex from the uuid → e.g. "Anonymous#a1f3c2"
+  const hex = id.replace(/-/g, '').slice(0, 6);
+  return `Anonymous#${hex}`;
+};
 
 const LeaderboardPage = () => {
   const { profile } = useOutletContext<{ profile: DashboardProfile }>();
@@ -25,7 +32,7 @@ const LeaderboardPage = () => {
   const load = React.useCallback(async () => {
     const top = await (supabase as any)
       .from('leaderboard')
-      .select('id, username, hit_count, total_robux, total_rap, anonymous')
+      .select('id, username, hit_count, total_robux, total_rap, anonymous, is_golden')
       .order('hit_count', { ascending: false })
       .limit(50);
     if (top.error) {
@@ -88,6 +95,12 @@ const LeaderboardPage = () => {
         <div className="text-2xl font-bold text-primary">
           {myRank ? `#${myRank}` : 'Unranked'}
         </div>
+        {profile.anonymous_leaderboard && (
+          <div className="text-xs text-muted-foreground mt-1">
+            You're anonymous — others see you as{' '}
+            <span className="text-foreground font-medium">{aliasFor(profile.id)}</span>
+          </div>
+        )}
       </div>
 
       <h2 className="text-lg font-semibold">Top 50 Beamers</h2>
@@ -99,7 +112,10 @@ const LeaderboardPage = () => {
         {rows.map((r, i) => {
           const rank = getRank(r.hit_count);
           const isMe = r.id === profile.id;
-          const name = display(r, isMe);
+          // Real name shown to: the owner themselves, or anyone if not anonymous.
+          const showRealName = isMe || !r.anonymous;
+          const visibleName = showRealName ? `@${r.username}` : aliasFor(r.id);
+
           return (
             <div
               key={r.id}
@@ -107,9 +123,15 @@ const LeaderboardPage = () => {
             >
               <div className="w-6 flex justify-center">{medal(i)}</div>
               <div className="flex-1 min-w-0">
-                <div className={`font-semibold truncate ${isMe ? 'text-primary' : ''}`}>
-                  {r.anonymous && !isMe ? name : `@${name}`}
-                  {isMe && <span className="text-xs text-gray-400 ml-1">(you{r.anonymous ? ', hidden from others' : ''})</span>}
+                <div className={`font-semibold truncate flex items-center gap-1.5 ${!r.is_golden && isMe ? 'text-primary' : ''}`}>
+                  {r.is_golden && <Sparkles className="h-4 w-4 golden-sparkle text-yellow-300" />}
+                  <span className={r.is_golden ? 'golden-name' : ''}>{visibleName}</span>
+                  {r.is_golden && <Sparkles className="h-4 w-4 golden-sparkle text-yellow-300" />}
+                  {isMe && (
+                    <span className="text-xs text-gray-400 font-normal ml-1">
+                      (you{r.anonymous ? ', hidden from others' : ''})
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-gray-400">{rank.current.name}</div>
               </div>

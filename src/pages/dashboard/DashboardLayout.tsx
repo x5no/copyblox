@@ -32,7 +32,11 @@ export interface DashboardProfile {
   site_theme?: ThemeName;
   anonymous_leaderboard?: boolean;
   video_preference?: 'stock' | 'custom';
-  custom_video_url?: string | null;
+  custom_video_bot_followers?: string | null;
+  custom_video_copy_games?: string | null;
+  custom_video_copy_clothes?: string | null;
+  custom_video_group_botter?: string | null;
+  custom_video_vc_enabler?: string | null;
 }
 
 interface OutletCtx {
@@ -63,7 +67,7 @@ const DashboardLayout = () => {
       }
       const { data, error } = await (supabase as any)
         .from('profiles')
-        .select('id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler, dashboard_theme, site_theme, anonymous_leaderboard, video_preference, custom_video_url')
+        .select('id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler, dashboard_theme, site_theme, anonymous_leaderboard, video_preference, custom_video_bot_followers, custom_video_copy_games, custom_video_copy_clothes, custom_video_group_botter, custom_video_vc_enabler')
         .eq('id', sess.session.user.id)
         .maybeSingle();
       if (error) toast.error(error.message);

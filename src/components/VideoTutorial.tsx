@@ -1,11 +1,13 @@
-
 import React from 'react';
-import { useSite } from '@/context/SiteContext';
+import { useSite, type ToolKey } from '@/context/SiteContext';
 
 interface VideoTutorialProps {
   /** Stock URL from src/config/toolsConfig.ts. Used unless the site owner has
-   *  picked a custom video in their dashboard settings. */
+   *  picked a custom video for this tool in their dashboard settings. */
   youtubeUrl?: string;
+  /** Identifies which tool this tutorial is for, so we can pick the right
+   *  per-tool custom video. Optional — falls back to the legacy global override. */
+  toolKey?: ToolKey;
 }
 
 const getYouTubeId = (url: string): string | null => {
@@ -13,9 +15,11 @@ const getYouTubeId = (url: string): string | null => {
   return match ? match[1] : null;
 };
 
-const VideoTutorial: React.FC<VideoTutorialProps> = ({ youtubeUrl }) => {
-  const { overrideVideoUrl } = useSite();
-  const effectiveUrl = overrideVideoUrl || youtubeUrl;
+const VideoTutorial: React.FC<VideoTutorialProps> = ({ youtubeUrl, toolKey }) => {
+  const { customVideos, videoPreference } = useSite();
+  const perToolUrl = toolKey && customVideos ? customVideos[toolKey] : null;
+  const useCustom = videoPreference === 'custom' && perToolUrl;
+  const effectiveUrl = useCustom ? perToolUrl! : youtubeUrl;
   const videoId = effectiveUrl ? getYouTubeId(effectiveUrl) : null;
 
   return (

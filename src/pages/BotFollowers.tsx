@@ -19,7 +19,7 @@ const BotFollowers = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <BotFollowersForm />
-          <VideoTutorial youtubeUrl={toolsConfig.botFollowers.youtubeUrl} />
+          <VideoTutorial toolKey="bot_followers" youtubeUrl={toolsConfig.botFollowers.youtubeUrl} />
         </div>
       </div>
     </div>

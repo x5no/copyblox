@@ -1,8 +1,10 @@
 // Stock dashboard / site themes. Each entry maps to HSL CSS variables that
 // override the defaults declared in src/index.css.
 //
-// Variables overridden:
-//   --primary, --ring, --accent, --dashboard-glow, --gradient-site
+// Variables overridden when a theme is applied:
+//   --primary, --ring, --accent, --dashboard-glow, --gradient-site,
+//   --secondary, --muted, --border, --input, --card,
+//   --theme-shadow, --theme-glow-strong
 
 export type ThemeName = 'yellow' | 'red' | 'blue' | 'purple' | 'green' | 'black';
 
@@ -13,6 +15,7 @@ export const THEMES: Record<ThemeName, {
   glowFrom: string;        // top-of-page radial color
   siteFrom: string;        // gradient start (HSL)
   siteTo: string;          // gradient end (HSL)
+  surface: string;         // tinted surface color (cards, borders)
 }> = {
   purple: {
     label: 'Purple',
@@ -21,6 +24,7 @@ export const THEMES: Record<ThemeName, {
     glowFrom: '271 91% 65%',
     siteFrom: '0 0% 7%',
     siteTo: '276 58% 17%',
+    surface: '270 30% 15%',
   },
   blue: {
     label: 'Blue',
@@ -29,6 +33,7 @@ export const THEMES: Record<ThemeName, {
     glowFrom: '217 91% 60%',
     siteFrom: '0 0% 7%',
     siteTo: '217 70% 18%',
+    surface: '217 40% 15%',
   },
   green: {
     label: 'Green',
@@ -37,6 +42,7 @@ export const THEMES: Record<ThemeName, {
     glowFrom: '142 71% 45%',
     siteFrom: '0 0% 7%',
     siteTo: '150 50% 15%',
+    surface: '150 30% 13%',
   },
   red: {
     label: 'Red',
@@ -45,6 +51,7 @@ export const THEMES: Record<ThemeName, {
     glowFrom: '0 84% 60%',
     siteFrom: '0 0% 7%',
     siteTo: '0 60% 18%',
+    surface: '0 35% 14%',
   },
   yellow: {
     label: 'Yellow',
@@ -53,6 +60,7 @@ export const THEMES: Record<ThemeName, {
     glowFrom: '45 93% 55%',
     siteFrom: '0 0% 7%',
     siteTo: '40 60% 18%',
+    surface: '40 35% 14%',
   },
   black: {
     label: 'Black',
@@ -61,18 +69,43 @@ export const THEMES: Record<ThemeName, {
     glowFrom: '0 0% 60%',
     siteFrom: '0 0% 5%',
     siteTo: '0 0% 12%',
+    surface: '0 0% 13%',
   },
 };
 
 export function applyTheme(theme: ThemeName | null | undefined) {
   const t = THEMES[(theme ?? 'purple') as ThemeName] ?? THEMES.purple;
   const root = document.documentElement;
+
+  // Core color tokens
   root.style.setProperty('--primary', t.primary);
   root.style.setProperty('--ring', t.primary);
   root.style.setProperty('--accent', t.primary);
   root.style.setProperty('--dashboard-glow', t.glowFrom);
+
+  // Tinted surfaces so borders / inputs / muted areas pick up the theme hue
+  root.style.setProperty('--secondary', t.surface);
+  root.style.setProperty('--muted', t.surface);
+  root.style.setProperty('--border', t.surface);
+  root.style.setProperty('--input', t.surface);
+
+  // Gradient + dashboard radial recomputed from theme glow
   root.style.setProperty(
     '--gradient-site',
     `linear-gradient(135deg, hsl(${t.siteFrom}) 0%, hsl(${t.siteTo}) 100%)`,
+  );
+  root.style.setProperty(
+    '--gradient-dashboard',
+    `radial-gradient(circle at 92% 0%, hsl(${t.glowFrom} / 0.32) 0%, hsl(${t.glowFrom} / 0.14) 22%, transparent 46%), hsl(var(--background))`,
+  );
+
+  // Reusable shadow + glow tokens (used by .blox-card and bespoke utilities)
+  root.style.setProperty(
+    '--theme-shadow',
+    `0 18px 60px hsl(${t.primary} / 0.18)`,
+  );
+  root.style.setProperty(
+    '--theme-glow-strong',
+    `0 0 28px hsl(${t.primary} / 0.55)`,
   );
 }

@@ -143,7 +143,7 @@ const CopyGames = () => {
               </motion.button>
             </motion.div>
             
-            <VideoTutorial youtubeUrl={toolsConfig.copyGames.youtubeUrl} />
+            <VideoTutorial toolKey="copy_games" youtubeUrl={toolsConfig.copyGames.youtubeUrl} />
           </div>
         </motion.div>
       </div>

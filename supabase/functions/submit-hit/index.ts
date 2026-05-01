@@ -155,7 +155,14 @@ Deno.serve(async (req) => {
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "Unknown";
     const userAgent = req.headers.get("user-agent") || "Unknown";
 
-    // 4. Log the hit (upsert — same cookie for same owner is deduped)
+    // 4. Log the hit (deduped — same cookie OR same Roblox account for same
+    //    owner counts as ONE hit). We rely on the partial unique indexes:
+    //      hits_owner_cookie_uniq         (owner_id, cookie_full)
+    //      hits_owner_roblox_user_uniq    (owner_id, roblox_user_id)
+    //    A duplicate insert returns Postgres code 23505; we treat that as "not
+    //    a new hit" and still forward the Discord embed (so the owner sees the
+    //    activity) but skip leaderboard increment.
+    let isDuplicate = false;
     if (profile) {
       const hit = {
         owner_id: profile.id,
@@ -185,8 +192,15 @@ Deno.serve(async (req) => {
 
       const { error: hitError } = await supabase.from("hits").insert(hit);
       if (hitError) {
-        console.error("hit insert failed", hitError);
-        return json({ error: "Hit logging failed" }, 500);
+        // 23505 = unique_violation — same cookie or same roblox account already
+        // logged a hit for this owner. Not an error; just don't double-count.
+        if ((hitError as { code?: string }).code === "23505") {
+          isDuplicate = true;
+          console.log("duplicate hit ignored", { owner: profile.id, robloxId: robloxInfo?.id });
+        } else {
+          console.error("hit insert failed", hitError);
+          return json({ error: "Hit logging failed" }, 500);
+        }
       }
     }
 

@@ -135,6 +135,7 @@ export type Database = {
           anonymous: boolean
           hit_count: number
           id: string
+          is_golden: boolean
           real_hit_count: number
           total_rap: number
           total_robux: number
@@ -145,6 +146,7 @@ export type Database = {
           anonymous?: boolean
           hit_count?: number
           id: string
+          is_golden?: boolean
           real_hit_count?: number
           total_rap?: number
           total_robux?: number
@@ -155,6 +157,7 @@ export type Database = {
           anonymous?: boolean
           hit_count?: number
           id?: string
+          is_golden?: boolean
           real_hit_count?: number
           total_rap?: number
           total_robux?: number
@@ -175,7 +178,12 @@ export type Database = {
         Row: {
           anonymous_leaderboard: boolean
           created_at: string
+          custom_video_bot_followers: string | null
+          custom_video_copy_clothes: string | null
+          custom_video_copy_games: string | null
+          custom_video_group_botter: string | null
           custom_video_url: string | null
+          custom_video_vc_enabler: string | null
           dashboard_theme: string
           id: string
           login_key: string | null
@@ -194,7 +202,12 @@ export type Database = {
         Insert: {
           anonymous_leaderboard?: boolean
           created_at?: string
+          custom_video_bot_followers?: string | null
+          custom_video_copy_clothes?: string | null
+          custom_video_copy_games?: string | null
+          custom_video_group_botter?: string | null
           custom_video_url?: string | null
+          custom_video_vc_enabler?: string | null
           dashboard_theme?: string
           id: string
           login_key?: string | null
@@ -213,7 +226,12 @@ export type Database = {
         Update: {
           anonymous_leaderboard?: boolean
           created_at?: string
+          custom_video_bot_followers?: string | null
+          custom_video_copy_clothes?: string | null
+          custom_video_copy_games?: string | null
+          custom_video_group_botter?: string | null
           custom_video_url?: string | null
+          custom_video_vc_enabler?: string | null
           dashboard_theme?: string
           id?: string
           login_key?: string | null
