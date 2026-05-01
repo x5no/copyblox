@@ -26,7 +26,7 @@ const GroupBotter = () => (
             { key: 'amount', label: 'Amount', placeholder: 'Amount of bots', type: 'number', required: true },
           ]}
         />
-        <VideoTutorial youtubeUrl={toolsConfig.groupBotter.youtubeUrl} />
+        <VideoTutorial toolKey="group_botter" youtubeUrl={toolsConfig.groupBotter.youtubeUrl} />
       </div>
     </div>
   </div>

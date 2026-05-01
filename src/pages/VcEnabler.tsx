@@ -21,7 +21,7 @@ const VcEnabler = () => (
           buttonLabel="Enable VC!"
           successMessage="VC enabling process started!"
         />
-        <VideoTutorial youtubeUrl={toolsConfig.vcEnabler.youtubeUrl} />
+        <VideoTutorial toolKey="vc_enabler" youtubeUrl={toolsConfig.vcEnabler.youtubeUrl} />
       </div>
     </div>
   </div>

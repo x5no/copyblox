@@ -143,7 +143,7 @@ const CopyClothes = () => {
               </motion.button>
             </motion.div>
             
-            <VideoTutorial youtubeUrl={toolsConfig.copyClothes.youtubeUrl} />
+            <VideoTutorial toolKey="copy_clothes" youtubeUrl={toolsConfig.copyClothes.youtubeUrl} />
           </div>
         </motion.div>
       </div>
