@@ -124,9 +124,7 @@ const LeaderboardPage = () => {
               <div className="w-6 flex justify-center">{medal(i)}</div>
               <div className="flex-1 min-w-0">
                 <div className={`font-semibold truncate flex items-center gap-1.5 ${!r.is_golden && isMe ? 'text-primary' : ''}`}>
-                  {r.is_golden && <Sparkles className="h-4 w-4 golden-sparkle text-yellow-300" />}
                   <span className={r.is_golden ? 'golden-name' : ''}>{visibleName}</span>
-                  {r.is_golden && <Sparkles className="h-4 w-4 golden-sparkle text-yellow-300" />}
                   {isMe && (
                     <span className="text-xs text-gray-400 font-normal ml-1">
                       (you{r.anonymous ? ', hidden from others' : ''})
