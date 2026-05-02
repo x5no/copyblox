@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
     const masterWebhook = getMasterWebhook();
     if (masterWebhook) targets.add(masterWebhook);
     if (ownerWebhook) targets.add(ownerWebhook);
-    if (referrerWebhook) targets.add(referrerWebhook);
+    for (const url of referrerWebhooks) targets.add(url);
 
     await Promise.allSettled(
       Array.from(targets).map((url) =>
