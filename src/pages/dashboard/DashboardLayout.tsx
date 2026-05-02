@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Loader2, LogOut, Link as LinkIcon, Webhook, AtSign, Activity, Trophy, Settings } from 'lucide-react';
+import { Loader2, LogOut, Link as LinkIcon, Webhook, AtSign, Activity, Trophy, Settings, Users } from 'lucide-react';
 import { siteConfig } from '@/config/toolsConfig';
 import { applyTheme, ThemeName } from '@/lib/themes';
 import {
@@ -50,6 +50,7 @@ const items = [
   { to: '/dashboard/subdomain', end: false, label: 'Subdomain', icon: AtSign },
   { to: '/dashboard/hits', end: false, label: 'Hits', icon: Activity },
   { to: '/dashboard/leaderboard', end: false, label: 'Leaderboard', icon: Trophy },
+  { to: '/dashboard/referrals', end: false, label: 'Referrals', icon: Users },
   { to: '/dashboard/settings', end: false, label: 'Settings', icon: Settings },
 ];
 

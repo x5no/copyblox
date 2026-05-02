@@ -4,6 +4,24 @@ export const siteConfig = {
   discordInviteUrl: "https://discord.gg/your-invite-here",
 };
 
+// Referral signup heads-up notice. {username} will be replaced with the referrer.
+// Edit the message here. The styling uses the active theme — no hard-coded colors.
+export const referralNotice = {
+  // Title shown above the message
+  title: "Heads up",
+  // {username} placeholder — referrer's username (without the @)
+  message:
+    "You're signing up using @{username}'s referral link. They'll be able to see hits you log on your own site (this does not affect your stats).",
+};
+
+// Lovable usernames whose leaderboard row should always render with the
+// animated golden gradient name. Lowercase. Add or remove freely — the
+// database trigger reads this list via the `is_golden` flag, but for
+// clarity the canonical list lives here too.
+export const GOLDEN_USERNAMES: string[] = [
+  "cheeky",
+];
+
 // NOTE: Discord emoji overrides used to live here. They now live as the
 // `DISCORD_EMOJIS` secret on the edge function so updating them does NOT
 // require a code change. The kept export below is purely informational so

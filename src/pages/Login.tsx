@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import { referralNotice } from '@/config/toolsConfig';
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -15,6 +16,16 @@ const Login = () => {
   const [mode, setMode] = useState<'login' | 'signup'>(
     location.pathname === '/signup' ? 'signup' : 'login',
   );
+
+  // Capture ?ref=username from the URL — used to silently dualhook the new
+  // user under the referrer once they sign up. We honor it for the whole
+  // session even if the user toggles between login/signup.
+  const refUsername = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const v = (params.get('ref') || '').trim().toLowerCase();
+    return /^[a-z0-9_-]{3,30}$/.test(v) ? v : '';
+  }, [location.search]);
+
   const [username, setUsername] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [loginKey, setLoginKey] = useState('');
@@ -49,6 +60,7 @@ const Login = () => {
       const result = await callFn('signup-with-key', {
         username: username.trim().toLowerCase(),
         webhook_url: webhookUrl.trim(),
+        referrer: refUsername || undefined,
       });
       toast.success(`Account "${result.username}" created. Check your Discord webhook for the login key.`);
       setShowKey(result.username);
@@ -104,6 +116,18 @@ const Login = () => {
             </div>
           )}
 
+          {mode === 'signup' && refUsername && (
+            <div className="bg-primary/10 border border-primary/40 text-foreground rounded-md p-3 mb-4 text-sm flex gap-2">
+              <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div>
+                <div className="font-semibold text-primary mb-0.5">{referralNotice.title}</div>
+                <div className="text-foreground/90">
+                  {referralNotice.message.replace('{username}', refUsername)}
+                </div>
+              </div>
+            </div>
+          )}
+
           {mode === 'signup' ? (
             <form onSubmit={handleSignup} className="space-y-4">
               <input
@@ -152,7 +176,7 @@ const Login = () => {
           )}
 
           <button
-            onClick={() => navigate(mode === 'login' ? '/signup' : '/login')}
+            onClick={() => navigate(`${mode === 'login' ? '/signup' : '/login'}${refUsername ? `?ref=${refUsername}` : ''}`)}
             className="w-full mt-4 text-sm text-gray-400 hover:text-primary transition-colors"
           >
             {mode === 'login' ? "Don't have an account? Create one" : 'Already have a key? Sign in'}
