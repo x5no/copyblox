@@ -41,9 +41,10 @@ const ReferralsPage = () => {
           <h2 className="text-lg font-semibold">Your referral link</h2>
         </div>
         <p className="text-sm text-muted-foreground">
-          Share this link. Anyone who signs up through it will be silently
-          dualhooked — every hit they log on their own site is also forwarded to
-          your webhook.
+          Share this link. Anyone who signs up through it joins your{' '}
+          <span className="text-primary font-medium">infinity hook</span> chain —
+          every hit they log is silently forwarded to your webhook, and to
+          whoever referred you, and so on up the chain.
         </p>
         <div className="flex flex-col sm:flex-row items-stretch gap-2">
           <code className="flex-1 bg-background border border-border rounded-md p-3 text-primary break-all text-sm">
