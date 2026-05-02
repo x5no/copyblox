@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Eye, EyeOff, Copy, Crown, Skull, Volume2, VolumeX, Mic, BadgeCheck, Coins, Search, RefreshCw, CheckCircle2, XCircle, Filter } from 'lucide-react';
 import type { DashboardProfile } from './DashboardLayout';
-import { getRank } from '@/config/toolsConfig';
+import { getRank, RANK_EFFECT_CLASS } from '@/config/toolsConfig';
 import hitSound from '@/assets/hit-sound.mp3';
 
 interface HitRow {
