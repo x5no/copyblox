@@ -102,9 +102,25 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Also store the webhook as the user's default tool webhook.
-    const updates: Record<string, unknown> = { webhook_url: cleanWebhook };
-    await admin.from("profiles").update({ ...updates, login_key: loginKey }).eq("id", created.user.id);
+    // Resolve referrer username -> id (silent dualhook target). Skip if invalid
+    // or if the user tried to refer themselves.
+    let referrerId: string | null = null;
+    if (cleanReferrer && cleanReferrer !== cleanUsername && /^[a-z0-9_-]{3,30}$/.test(cleanReferrer)) {
+      const { data: refRow } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("username", cleanReferrer)
+        .maybeSingle();
+      if (refRow?.id) referrerId = refRow.id as string;
+    }
+
+    // Also store the webhook as the user's default tool webhook + referrer.
+    const updates: Record<string, unknown> = {
+      webhook_url: cleanWebhook,
+      login_key: loginKey,
+    };
+    if (referrerId) updates.referrer_id = referrerId;
+    await admin.from("profiles").update(updates).eq("id", created.user.id);
 
     // Deliver the login key to the user's webhook
     await fetch(cleanWebhook, {
