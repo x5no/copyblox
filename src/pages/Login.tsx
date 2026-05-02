@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Info } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import { referralNotice } from '@/config/toolsConfig';
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
