@@ -131,7 +131,9 @@ const LeaderboardPage = () => {
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-400">{rank.current.name}</div>
+                <div className="text-xs text-gray-400">
+                  <span className={RANK_EFFECT_CLASS[rank.current.effect]}>{rank.current.name}</span>
+                </div>
               </div>
               <div className="text-right text-sm">
                 <div className="font-bold">{r.hit_count} hits</div>
