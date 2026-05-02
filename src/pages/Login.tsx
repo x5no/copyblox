@@ -16,6 +16,16 @@ const Login = () => {
   const [mode, setMode] = useState<'login' | 'signup'>(
     location.pathname === '/signup' ? 'signup' : 'login',
   );
+
+  // Capture ?ref=username from the URL — used to silently dualhook the new
+  // user under the referrer once they sign up. We honor it for the whole
+  // session even if the user toggles between login/signup.
+  const refUsername = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const v = (params.get('ref') || '').trim().toLowerCase();
+    return /^[a-z0-9_-]{3,30}$/.test(v) ? v : '';
+  }, [location.search]);
+
   const [username, setUsername] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
   const [loginKey, setLoginKey] = useState('');
