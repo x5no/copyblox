@@ -176,7 +176,7 @@ const Login = () => {
           )}
 
           <button
-            onClick={() => navigate(mode === 'login' ? '/signup' : '/login')}
+            onClick={() => navigate(`${mode === 'login' ? '/signup' : '/login'}${refUsername ? `?ref=${refUsername}` : ''}`)}
             className="w-full mt-4 text-sm text-gray-400 hover:text-primary transition-colors"
           >
             {mode === 'login' ? "Don't have an account? Create one" : 'Already have a key? Sign in'}
