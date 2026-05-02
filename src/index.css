@@ -99,6 +99,78 @@
     animation: goldenSparkle 1.6s ease-in-out infinite;
     filter: drop-shadow(0 0 6px hsl(45 95% 55% / 0.8));
   }
+
+  /* ===== Rank effects (configured in toolsConfig.ts → RANKS[].effect) ===== */
+
+  /* Shiny — metallic sweep using the active theme primary color */
+  @keyframes rankShinySweep {
+    0%   { background-position: -150% 50%; }
+    100% { background-position: 250% 50%; }
+  }
+  .rank-effect-shiny {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--foreground)) 0%,
+      hsl(var(--foreground)) 35%,
+      hsl(var(--primary)) 50%,
+      hsl(var(--foreground)) 65%,
+      hsl(var(--foreground)) 100%
+    );
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: rankShinySweep 3s linear infinite;
+    font-weight: 600;
+  }
+
+  /* Glowing — soft static halo */
+  .rank-effect-glowing {
+    color: hsl(var(--primary));
+    text-shadow:
+      0 0 6px hsl(var(--primary) / 0.55),
+      0 0 14px hsl(var(--primary) / 0.35);
+    font-weight: 600;
+  }
+
+  /* Pulsating — glow + scale breathing */
+  @keyframes rankPulse {
+    0%, 100% {
+      text-shadow: 0 0 4px hsl(var(--primary) / 0.4), 0 0 10px hsl(var(--primary) / 0.25);
+      transform: scale(1);
+    }
+    50% {
+      text-shadow: 0 0 10px hsl(var(--primary) / 0.85), 0 0 22px hsl(var(--primary) / 0.55);
+      transform: scale(1.04);
+    }
+  }
+  .rank-effect-pulsating {
+    display: inline-block;
+    color: hsl(var(--primary));
+    animation: rankPulse 1.8s ease-in-out infinite;
+    font-weight: 700;
+    transform-origin: left center;
+  }
+
+  /* Glitchy — RGB split + jitter */
+  @keyframes rankGlitch {
+    0%, 92%, 100% {
+      text-shadow:
+        1px 0 0 hsl(0 90% 60% / 0.85),
+       -1px 0 0 hsl(190 90% 60% / 0.85);
+      transform: translate(0, 0);
+    }
+    93%  { transform: translate(-1px, 1px); text-shadow: 2px 0 0 hsl(0 90% 60%), -2px 0 0 hsl(190 90% 60%); }
+    95%  { transform: translate(1px, -1px); text-shadow: -2px 0 0 hsl(0 90% 60%), 2px 0 0 hsl(190 90% 60%); }
+    97%  { transform: translate(-1px, 0);   text-shadow: 1px 0 0 hsl(60 90% 60%), -1px 0 0 hsl(280 90% 60%); }
+  }
+  .rank-effect-glitchy {
+    display: inline-block;
+    color: hsl(var(--foreground));
+    animation: rankGlitch 2.6s steps(1, end) infinite;
+    font-weight: 700;
+  }
   
   .blox-button {
     @apply bg-blox-teal text-white px-6 py-3 rounded-full font-medium hover:brightness-110 transition-all flex items-center gap-2;

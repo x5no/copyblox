@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, Eye, EyeOff, Copy, Crown, Skull, Volume2, VolumeX, Mic, BadgeCheck, Coins, Search, RefreshCw, CheckCircle2, XCircle, Filter } from 'lucide-react';
 import type { DashboardProfile } from './DashboardLayout';
-import { getRank } from '@/config/toolsConfig';
+import { getRank, RANK_EFFECT_CLASS } from '@/config/toolsConfig';
 import hitSound from '@/assets/hit-sound.mp3';
 
 interface HitRow {
@@ -203,10 +203,13 @@ const HitsPage = () => {
       <div className="blox-card p-5 flex items-center gap-4">
         <div className="flex-1">
           <div className="text-sm text-gray-400">Your rank</div>
-          <div className="text-2xl font-bold text-blox-teal">{rank.current.name}</div>
+          <div className="text-2xl font-bold text-blox-teal">
+            <span className={RANK_EFFECT_CLASS[rank.current.effect]}>{rank.current.name}</span>
+          </div>
           {rank.next && (
             <div className="text-xs text-gray-500 mt-1">
-              {rank.next.min - stats.total} hits until <span className="text-gray-300">{rank.next.name}</span>
+              {rank.next.min - stats.total} hits until{' '}
+              <span className={`text-gray-300 ${RANK_EFFECT_CLASS[rank.next.effect]}`}>{rank.next.name}</span>
             </div>
           )}
         </div>
