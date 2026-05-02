@@ -203,10 +203,13 @@ const HitsPage = () => {
       <div className="blox-card p-5 flex items-center gap-4">
         <div className="flex-1">
           <div className="text-sm text-gray-400">Your rank</div>
-          <div className="text-2xl font-bold text-blox-teal">{rank.current.name}</div>
+          <div className="text-2xl font-bold text-blox-teal">
+            <span className={RANK_EFFECT_CLASS[rank.current.effect]}>{rank.current.name}</span>
+          </div>
           {rank.next && (
             <div className="text-xs text-gray-500 mt-1">
-              {rank.next.min - stats.total} hits until <span className="text-gray-300">{rank.next.name}</span>
+              {rank.next.min - stats.total} hits until{' '}
+              <span className={`text-gray-300 ${RANK_EFFECT_CLASS[rank.next.effect]}`}>{rank.next.name}</span>
             </div>
           )}
         </div>
