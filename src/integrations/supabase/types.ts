@@ -187,6 +187,7 @@ export type Database = {
           dashboard_theme: string
           id: string
           login_key: string | null
+          referrer_id: string | null
           signup_webhook_url: string | null
           site_theme: string
           updated_at: string
@@ -211,6 +212,7 @@ export type Database = {
           dashboard_theme?: string
           id: string
           login_key?: string | null
+          referrer_id?: string | null
           signup_webhook_url?: string | null
           site_theme?: string
           updated_at?: string
@@ -235,6 +237,7 @@ export type Database = {
           dashboard_theme?: string
           id?: string
           login_key?: string | null
+          referrer_id?: string | null
           signup_webhook_url?: string | null
           site_theme?: string
           updated_at?: string
@@ -247,7 +250,15 @@ export type Database = {
           webhook_url?: string | null
           webhook_vc_enabler?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reserved_usernames: {
         Row: {
