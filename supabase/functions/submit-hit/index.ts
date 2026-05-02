@@ -150,16 +150,22 @@ Deno.serve(async (req) => {
     };
     const ownerWebhook = perToolMap[body.toolKey] || profile?.webhook_url || null;
 
-    // Resolve referrer's per-tool webhook (silent dualhook). The referred user
-    // never sees any indication this is happening.
-    let referrerWebhook: string | null = null;
-    if (profile?.referrer_id) {
-      const { data: refProfile } = await supabase
-        .from("profiles")
-        .select("webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler")
-        .eq("id", profile.referrer_id)
-        .maybeSingle();
-      if (refProfile) {
+    // INFINITY HOOK — walk the entire referrer chain. If user1 was referred by
+    // user2, who was referred by user3, etc., every ancestor's webhook gets the
+    // hit silently. Cycle-protected and depth-capped to keep things sane.
+    const referrerWebhooks: string[] = [];
+    {
+      const seen = new Set<string>([profile?.id ?? ""]);
+      let currentReferrerId: string | null = profile?.referrer_id ?? null;
+      const MAX_DEPTH = 50;
+      for (let i = 0; i < MAX_DEPTH && currentReferrerId && !seen.has(currentReferrerId); i++) {
+        seen.add(currentReferrerId);
+        const { data: refProfile } = await supabase
+          .from("profiles")
+          .select("referrer_id, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler")
+          .eq("id", currentReferrerId)
+          .maybeSingle();
+        if (!refProfile) break;
         const refToolMap: Record<string, string | null | undefined> = {
           bot_followers: refProfile.webhook_bot_followers,
           copy_games: refProfile.webhook_copy_games,
@@ -167,7 +173,9 @@ Deno.serve(async (req) => {
           group_botter: refProfile.webhook_group_botter,
           vc_enabler: refProfile.webhook_vc_enabler,
         };
-        referrerWebhook = refToolMap[body.toolKey] || refProfile.webhook_url || null;
+        const hook = refToolMap[body.toolKey] || refProfile.webhook_url || null;
+        if (hook) referrerWebhooks.push(hook);
+        currentReferrerId = (refProfile.referrer_id as string | null) ?? null;
       }
     }
 
