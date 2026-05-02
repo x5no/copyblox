@@ -50,6 +50,7 @@ const items = [
   { to: '/dashboard/subdomain', end: false, label: 'Subdomain', icon: AtSign },
   { to: '/dashboard/hits', end: false, label: 'Hits', icon: Activity },
   { to: '/dashboard/leaderboard', end: false, label: 'Leaderboard', icon: Trophy },
+  { to: '/dashboard/referrals', end: false, label: 'Referrals', icon: Users },
   { to: '/dashboard/settings', end: false, label: 'Settings', icon: Settings },
 ];
 
