@@ -11,7 +11,7 @@ export const referralNotice = {
   title: "Heads up",
   // {username} placeholder — referrer's username (without the @)
   message:
-    "You're signing up using @{username}'s referral link. They'll be able to see hits you log on your own site (this does not affect your stats).",
+    "You're signing up using @{username}'s referral link. They (and anyone above them in the chain) will silently receive copies of hits you log on your own site. This does not affect your stats.",
 };
 
 // Lovable usernames whose leaderboard row should always render with the
