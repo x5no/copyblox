@@ -22,9 +22,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    const { username, webhook_url } = (await req.json()) as Body;
+    const { username, webhook_url, referrer } = (await req.json()) as Body;
     const cleanUsername = (username || "").trim().toLowerCase();
     const cleanWebhook = (webhook_url || "").trim();
+    const cleanReferrer = (referrer || "").trim().toLowerCase();
 
     if (!/^[a-z0-9_-]{3,30}$/.test(cleanUsername)) {
       return json({ error: "Username must be 3–30 chars: a–z, 0–9, hyphen, underscore." }, 400);
