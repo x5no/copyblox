@@ -62,6 +62,7 @@ const App = () => (
                 <Route path="subdomain" element={<SubdomainPage />} />
                 <Route path="hits" element={<HitsPage />} />
                 <Route path="leaderboard" element={<LeaderboardPage />} />
+                <Route path="referrals" element={<ReferralsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
               </Route>
               {/* Per-user site lives at /:username/* */}
