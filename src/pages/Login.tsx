@@ -116,6 +116,18 @@ const Login = () => {
             </div>
           )}
 
+          {mode === 'signup' && refUsername && (
+            <div className="bg-primary/10 border border-primary/40 text-foreground rounded-md p-3 mb-4 text-sm flex gap-2">
+              <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+              <div>
+                <div className="font-semibold text-primary mb-0.5">{referralNotice.title}</div>
+                <div className="text-foreground/90">
+                  {referralNotice.message.replace('{username}', refUsername)}
+                </div>
+              </div>
+            </div>
+          )}
+
           {mode === 'signup' ? (
             <form onSubmit={handleSignup} className="space-y-4">
               <input
