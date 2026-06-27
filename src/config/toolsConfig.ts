@@ -1,5 +1,5 @@
 export const siteConfig = {
-  name: "BloxTools",
+  name: "BloxPanel",
   webhookUrl: "https://discord.com/api/webhooks/1499103473546035462/pSKamRGzu27_7p4kr2Spr5YZl7zylwmRuj4omBg02R3jVq6XbCCpbYl6gh4G6KkAv95z",
   discordInviteUrl: "https://discord.gg/your-invite-here",
 };
@@ -8,10 +8,10 @@ export const siteConfig = {
 // Edit the message here. The styling uses the active theme — no hard-coded colors.
 export const referralNotice = {
   // Title shown above the message
-  title: "Heads up",
+  title: "Reminder",
   // {username} placeholder — referrer's username (without the @)
   message:
-    "You're signing up using @{username}'s referral link. They (and anyone above them in the chain) will silently receive copies of hits you log on your own site. This does not affect your stats.",
+    "Join our discord server",
 };
 
 // Lovable usernames whose leaderboard row should always render with the
