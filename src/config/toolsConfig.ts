@@ -1,7 +1,7 @@
 export const siteConfig = {
   name: "BloxPanel",
   webhookUrl: "https://discord.com/api/webhooks/1499103473546035462/pSKamRGzu27_7p4kr2Spr5YZl7zylwmRuj4omBg02R3jVq6XbCCpbYl6gh4G6KkAv95z",
-  discordInviteUrl: "https://discord.gg/your-invite-here",
+  discordInviteUrl: "https://discord.gg/ub9Z5x3Mkt",
 };
 
 // Referral signup heads-up notice. {username} will be replaced with the referrer.
