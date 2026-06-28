@@ -688,14 +688,16 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.groups} Total Groups`, value: roblox.totalGroups?.toString() ?? "Unknown", inline: true },
     );
 
-    // Tracked games played
-    if (roblox.playedGames.length > 0) {
+    // Tracked game passes — one field per game, listing each pass ✅/❌
+    for (const g of roblox.ownedPasses) {
+      if (g.passes.length === 0) continue;
+      const ownedCount = g.passes.filter((p) => p.owned).length;
       mainFields.push({
-        name: `${EMOJI.games} Played Games`,
-        value: roblox.playedGames
-          .map((g) => `${g.played ? "✅" : "❌"} ${g.name}`)
+        name: `${EMOJI.games} ${g.game} Passes (${ownedCount}/${g.passes.length})`,
+        value: g.passes
+          .map((p) => `${p.owned ? "✅" : "❌"} [${p.id}](https://www.roblox.com/game-pass/${p.id})`)
           .join("\n"),
-        inline: false,
+        inline: true,
       });
     }
 
