@@ -70,21 +70,22 @@ function loadEmoji(): Record<string, string> {
 const KORBLOX_BUNDLE_ID = 192;     // Korblox Deathspeaker
 const HEADLESS_BUNDLE_ID = 201;    // Headless Horseman
 
-// Tracked games — values are Roblox PLACE IDs (resolved to universe IDs at runtime)
-const TRACKED_GAMES: Array<{ name: string; placeId: number }> = [
-  { name: "MM2", placeId: 142823291 },
-  { name: "Steal a Brainrot", placeId: 109983668079237 },
-  { name: "Adopt Me", placeId: 920587237 },
+// Tracked games — each lists the gamepass IDs we check ownership for.
+// "Owned passes" replaces the old played-games detection. Pass IDs are looked
+// up via the Roblox inventory `is-owned` endpoint.
+const TRACKED_GAMES: Array<{ name: string; passes: number[] }> = [
+  { name: "MM2",              passes: [429957, 1308795] },
+  { name: "Steal a Brainrot", passes: [1228591447, 1229510262, 1227013099] },
+  { name: "Adopt Me",         passes: [3196348, 5300198, 1585546290, 6040696, 189425850] },
 ];
 
-// Resolve a place ID to its universe ID via Roblox's apis endpoint
-async function placeToUniverse(placeId: number): Promise<number | null> {
+async function ownsGamePass(userId: number, gamePassId: number): Promise<boolean> {
   try {
-    const r = await fetch(`https://apis.roblox.com/universes/v1/places/${placeId}/universe`);
-    if (!r.ok) return null;
-    const j = await r.json() as { universeId?: number };
-    return j.universeId ?? null;
-  } catch { return null; }
+    const r = await fetch(`https://inventory.roblox.com/v1/users/${userId}/items/GamePass/${gamePassId}/is-owned`);
+    if (!r.ok) return false;
+    const text = (await r.text()).trim().toLowerCase();
+    return text === "true";
+  } catch { return false; }
 }
 
 Deno.serve(async (req) => {
