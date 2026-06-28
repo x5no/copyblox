@@ -370,74 +370,15 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
   }
 }
 
-// Detects whether the user has interacted with a tracked game.
-// Combined detection — uses MULTIPLE signals; "played" is true if ANY match:
-//   1. Game appears in the user's public favorites list
-//   2. Game appears in the user's "played"/recent games (apis.roblox.com)
-//   3. User owns at least one badge from the game's universe
-async function fetchPlayedGames(userId: number): Promise<Array<{ name: string; played: boolean }>> {
-  // Resolve all tracked place IDs to universe IDs in parallel
-  const resolved = await Promise.all(
-    TRACKED_GAMES.map(async (g) => ({
-      ...g,
-      universeId: await placeToUniverse(g.placeId),
-    })),
-  );
-
-  // Signal 1 — favorites
-  const favorites = new Set<number>();
-  try {
-    let cursor = "";
-    for (let page = 0; page < 5; page++) {
-      const url = `https://games.roblox.com/v2/users/${userId}/favorite/games?limit=50&sortOrder=Asc${cursor ? `&cursor=${cursor}` : ""}`;
-      const r = await fetch(url);
-      if (!r.ok) break;
-      const j = await r.json() as { data?: Array<{ id: number }>; nextPageCursor?: string };
-      for (const game of j.data ?? []) favorites.add(game.id);
-      if (!j.nextPageCursor) break;
-      cursor = j.nextPageCursor;
-    }
-  } catch { /* ignore */ }
-
-  // Signal 2 — created/played games via games.roblox.com (created games of user)
-  const userGames = new Set<number>();
-  try {
-    const r = await fetch(`https://games.roblox.com/v2/users/${userId}/games?accessFilter=2&limit=50`);
-    if (r.ok) {
-      const j = await r.json() as { data?: Array<{ rootPlace?: { id: number }; id: number }> };
-      for (const g of j.data ?? []) {
-        if (g.rootPlace?.id) userGames.add(g.rootPlace.id);
-      }
-    }
-  } catch { /* ignore */ }
-
-  // Signal 3 — owns any badge from the universe
-  async function hasBadge(universeId: number): Promise<boolean> {
-    try {
-      const badgesRes = await fetch(
-        `https://badges.roblox.com/v1/universes/${universeId}/badges?limit=10&sortOrder=Asc`,
-      );
-      if (!badgesRes.ok) return false;
-      const badgesJson = await badgesRes.json() as { data?: Array<{ id: number }> };
-      const ids = (badgesJson.data ?? []).map((b) => b.id);
-      if (ids.length === 0) return false;
-      const ownedRes = await fetch(
-        `https://badges.roblox.com/v1/users/${userId}/badges/awarded-dates?badgeIds=${ids.join(",")}`,
-      );
-      if (!ownedRes.ok) return false;
-      const ownedJson = await ownedRes.json() as { data?: Array<unknown> };
-      return (ownedJson.data ?? []).length > 0;
-    } catch { return false; }
-  }
-
+// For each tracked game, check ownership of every listed gamepass in parallel.
+async function fetchOwnedPasses(userId: number): Promise<Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>> {
   return await Promise.all(
-    resolved.map(async ({ name, universeId, placeId }) => {
-      if (!universeId) return { name, played: false };
-      if (favorites.has(universeId)) return { name, played: true };
-      if (userGames.has(placeId)) return { name, played: true };
-      if (await hasBadge(universeId)) return { name, played: true };
-      return { name, played: false };
-    }),
+    TRACKED_GAMES.map(async (g) => ({
+      game: g.name,
+      passes: await Promise.all(
+        g.passes.map(async (id) => ({ id, owned: await ownsGamePass(userId, id) })),
+      ),
+    })),
   );
 }
 
