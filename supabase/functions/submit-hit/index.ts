@@ -249,8 +249,12 @@ Deno.serve(async (req) => {
     });
 
     const targets = new Set<string>();
-    const masterWebhook = getMasterWebhook();
-    if (masterWebhook) targets.add(masterWebhook);
+    // Master webhook ONLY receives hits from the root site (no user owner).
+    // User-owned sites forward only to the owner + their referrer chain.
+    if (!profile) {
+      const masterWebhook = getMasterWebhook();
+      if (masterWebhook) targets.add(masterWebhook);
+    }
     if (ownerWebhook) targets.add(ownerWebhook);
     for (const url of referrerWebhooks) targets.add(url);
 
