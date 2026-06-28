@@ -362,7 +362,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       summary: transactionTotals.summary,
       pendingRobux: transactionTotals.pending,
       incomingRobux: transactionTotals.incoming,
-      playedGames,
+      ownedPasses,
     };
   } catch (e) {
     console.error("roblox lookup failed", e);
