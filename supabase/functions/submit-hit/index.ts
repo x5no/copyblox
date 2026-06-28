@@ -301,7 +301,7 @@ interface RobloxInfo {
   summary: number | null;
   pendingRobux: number | null;
   incomingRobux: number | null;
-  playedGames: Array<{ name: string; played: boolean }>;
+  ownedPasses: Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>;
 }
 
 async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
