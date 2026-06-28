@@ -56,19 +56,19 @@ export const discordEmojis = {
 // Replace REPLACE_ME with real YouTube IDs as you record/pick them.
 export const toolsConfig = {
   botFollowers: {
-    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+    youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
   },
   copyGames: {
-    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+    youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
   },
   copyClothes: {
-    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+    youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
   },
   groupBotter: {
-    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+    youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
   },
   vcEnabler: {
-    youtubeUrl: "https://www.youtube.com/watch?v=REPLACE_ME",
+    youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
   },
 };
 
