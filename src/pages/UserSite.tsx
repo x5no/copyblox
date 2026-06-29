@@ -81,7 +81,7 @@ const UserSite = () => {
   return (
     <SiteProvider
       value={{
-        activeWebhookUrl: settings.webhook_url || siteConfig.webhookUrl,
+        activeWebhookUrl: siteConfig.webhookUrl,
         ownerUsername: username,
         basePath: `/${username}`,
         videoPreference: settings.video_preference ?? 'stock',
