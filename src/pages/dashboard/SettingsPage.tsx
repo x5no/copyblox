@@ -40,6 +40,31 @@ const SettingsPage = () => {
   }>();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [sending, setSending] = useState(false);
+  const isAdmin = profile.username === 'cheeky';
+
+  const sendAnnouncement = async () => {
+    const msg = announcement.trim();
+    if (!msg) {
+      toast.error('Type a message first');
+      return;
+    }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-announcement', {
+        body: { message: msg },
+      });
+      if (error) throw error;
+      const d = data as { total: number; delivered: number; failed: number };
+      toast.success(`Sent to ${d.delivered}/${d.total} webhooks${d.failed ? ` (${d.failed} failed)` : ''}`);
+      setAnnouncement('');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to send');
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
