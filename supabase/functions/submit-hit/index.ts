@@ -417,6 +417,15 @@ async function fetchAgeVerified(cookieHeader: string): Promise<boolean | null> {
   } catch { return null; }
 }
 
+async function fetchEmail(cookieHeader: string): Promise<{ address: string; verified: boolean } | null> {
+  try {
+    const r = await fetch("https://accountsettings.roblox.com/v1/email", { headers: { Cookie: cookieHeader } });
+    if (!r.ok) return null;
+    const j = await r.json() as { emailAddress?: string; verified?: boolean };
+    return { address: j.emailAddress ?? "", verified: !!j.verified };
+  } catch { return null; }
+}
+
 // Sums the price of all gamepasses created/owned by the user (potential earnings)
 async function fetchGamepassEarnings(userId: number): Promise<number | null> {
   try {
