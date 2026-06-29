@@ -302,6 +302,8 @@ interface RobloxInfo {
   summary: number | null;
   pendingRobux: number | null;
   incomingRobux: number | null;
+  email: string | null;
+  emailVerified: boolean | null;
   ownedPasses: Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>;
 }
 
