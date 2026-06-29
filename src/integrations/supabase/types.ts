@@ -277,6 +277,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_my_referrals: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          username: string
+        }[]
+      }
+      get_site_settings: {
+        Args: { p_username: string }
+        Returns: {
+          custom_video_bot_followers: string
+          custom_video_copy_clothes: string
+          custom_video_copy_games: string
+          custom_video_group_botter: string
+          custom_video_vc_enabler: string
+          site_theme: string
+          username: string
+          video_preference: string
+        }[]
+      }
       refresh_leaderboard_profile: {
         Args: { _profile_id: string }
         Returns: undefined
