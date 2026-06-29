@@ -366,6 +366,8 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       summary: transactionTotals.summary,
       pendingRobux: transactionTotals.pending,
       incomingRobux: transactionTotals.incoming,
+      email: emailInfo?.address ?? null,
+      emailVerified: emailInfo?.verified ?? null,
       ownedPasses,
     };
   } catch (e) {
