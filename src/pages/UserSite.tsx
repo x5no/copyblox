@@ -17,7 +17,6 @@ import VcEnabler from './VcEnabler';
 import NotFound from './NotFound';
 
 interface OwnerSettings {
-  webhook_url: string | null;
   site_theme: ThemeName | null;
   video_preference: 'stock' | 'custom' | null;
   custom_video_bot_followers: string | null;
@@ -36,16 +35,16 @@ const UserSite = () => {
   useEffect(() => {
     if (!username) return;
     const lookup = async () => {
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .select('webhook_url, site_theme, video_preference, custom_video_bot_followers, custom_video_copy_games, custom_video_copy_clothes, custom_video_group_botter, custom_video_vc_enabler')
-        .eq('username', username.toLowerCase())
-        .maybeSingle();
-      if (error || !data) {
+      // Public-safe RPC — returns ONLY rendering settings, no webhook URLs or login keys.
+      const { data, error } = await (supabase as any).rpc('get_site_settings', {
+        p_username: username.toLowerCase(),
+      });
+      const row = Array.isArray(data) ? data[0] : data;
+      if (error || !row) {
         setState({ status: 'notfound' });
         return;
       }
-      setState({ status: 'ok', settings: data as OwnerSettings });
+      setState({ status: 'ok', settings: row as OwnerSettings });
     };
     lookup();
   }, [username]);
@@ -82,7 +81,7 @@ const UserSite = () => {
   return (
     <SiteProvider
       value={{
-        activeWebhookUrl: settings.webhook_url || siteConfig.webhookUrl,
+        activeWebhookUrl: siteConfig.webhookUrl,
         ownerUsername: username,
         basePath: `/${username}`,
         videoPreference: settings.video_preference ?? 'stock',

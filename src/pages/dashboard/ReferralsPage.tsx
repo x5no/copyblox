@@ -19,11 +19,7 @@ const ReferralsPage = () => {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await (supabase as any)
-        .from('profiles')
-        .select('id, username, created_at')
-        .eq('referrer_id', profile.id)
-        .order('created_at', { ascending: false });
+      const { data, error } = await (supabase as any).rpc('get_my_referrals');
       if (error) {
         toast.error(error.message);
         setReferred([]);

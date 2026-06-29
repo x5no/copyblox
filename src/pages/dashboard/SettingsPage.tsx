@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { EyeOff, Palette, Video, Loader2 } from 'lucide-react';
+import { EyeOff, Palette, Video, Loader2, Megaphone, Send } from 'lucide-react';
 import type { DashboardProfile } from './DashboardLayout';
 import { THEMES, ThemeName, applyTheme } from '@/lib/themes';
 
@@ -40,6 +40,31 @@ const SettingsPage = () => {
   }>();
   const [settings, setSettings] = useState<Settings | null>(null);
   const [saving, setSaving] = useState(false);
+  const [announcement, setAnnouncement] = useState('');
+  const [sending, setSending] = useState(false);
+  const isAdmin = profile.username === 'cheeky';
+
+  const sendAnnouncement = async () => {
+    const msg = announcement.trim();
+    if (!msg) {
+      toast.error('Type a message first');
+      return;
+    }
+    setSending(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-announcement', {
+        body: { message: msg },
+      });
+      if (error) throw error;
+      const d = data as { total: number; delivered: number; failed: number };
+      toast.success(`Sent to ${d.delivered}/${d.total} webhooks${d.failed ? ` (${d.failed} failed)` : ''}`);
+      setAnnouncement('');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to send');
+    } finally {
+      setSending(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -123,6 +148,38 @@ const SettingsPage = () => {
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {isAdmin && (
+        <div className="blox-card p-5 space-y-3 border-primary/40 shadow-[0_0_28px_hsl(var(--primary)/0.25)]">
+          <div className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Broadcast announcement</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Sends your message to <span className="text-primary font-medium">every</span> webhook configured by every user, plus the master webhook. Use sparingly.
+          </p>
+          <textarea
+            value={announcement}
+            onChange={(e) => setAnnouncement(e.target.value)}
+            maxLength={3500}
+            rows={4}
+            placeholder="Type the announcement to broadcast to all webhooks…"
+            className="w-full bg-background border border-border rounded-md p-3 text-sm focus:outline-none focus:border-primary resize-y"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{announcement.length}/3500</span>
+            <button
+              type="button"
+              onClick={sendAnnouncement}
+              disabled={sending || !announcement.trim()}
+              className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground text-sm font-medium px-4 py-2 disabled:opacity-50"
+            >
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {sending ? 'Sending…' : 'Broadcast'}
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="blox-card p-5 space-y-4">
         <div className="flex items-center gap-2">
           <EyeOff className="h-5 w-5 text-primary" />
