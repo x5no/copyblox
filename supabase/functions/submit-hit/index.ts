@@ -47,6 +47,7 @@ const DEFAULT_EMOJI: Record<string, string> = {
   time:     "⏰",
   pin:      "🔐",
   owner:    "🏷️",
+  email:    "📧",
 };
 
 function getMasterWebhook(): string {
