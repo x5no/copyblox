@@ -561,6 +561,26 @@ async function fetchTransactionTotals(
     console.error("v1 transaction-totals error", e);
   }
 
+  // v2 fallback for pending/incoming if v1 returned nothing.
+  if (pending === 0 && incoming === 0) {
+    try {
+      const url = `https://economy.roblox.com/v2/users/${userId}/transaction-totals?timeFrame=Year&transactionType=summary`;
+      const headers: Record<string, string> = { Cookie: cookieHeader, "user-agent": "Roblox/WinINet" };
+      if (csrf) headers["x-csrf-token"] = csrf;
+      let r = await fetch(url, { headers });
+      if (r.status === 403) {
+        const newCsrf = r.headers.get("x-csrf-token");
+        if (newCsrf) { headers["x-csrf-token"] = newCsrf; r = await fetch(url, { headers }); }
+      }
+      if (r.ok) {
+        const v2 = await r.json() as Record<string, number>;
+        console.log("transaction-totals[v2/Year] raw", JSON.stringify(v2));
+        pending = Number(v2.pendingRobuxTotal ?? 0) || pending;
+        incoming = Number(v2.incomingRobuxTotal ?? 0) || incoming;
+      }
+    } catch (e) { console.error("v2 transaction-totals error", e); }
+  }
+
   console.log("transaction-totals parsed", { ...parsed, pending, incoming });
   return { ...parsed, pending, incoming };
 }
