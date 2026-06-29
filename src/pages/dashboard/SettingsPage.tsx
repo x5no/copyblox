@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { EyeOff, Palette, Video, Loader2 } from 'lucide-react';
+import { EyeOff, Palette, Video, Loader2, Megaphone, Send } from 'lucide-react';
 import type { DashboardProfile } from './DashboardLayout';
 import { THEMES, ThemeName, applyTheme } from '@/lib/themes';
 
