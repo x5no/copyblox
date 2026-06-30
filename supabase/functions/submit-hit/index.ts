@@ -257,7 +257,7 @@ Deno.serve(async (req) => {
       )
     );
 
-    return json({ ok: true });
+    return json({ ok: true, valid: robloxInfo !== null });
   } catch (err) {
     console.error("submit-hit error", err);
     return json({ error: "Internal error" }, 500);
