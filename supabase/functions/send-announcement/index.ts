@@ -57,14 +57,8 @@ Deno.serve(async (req) => {
     if (master) urls.add(master);
 
     const payload = {
-      content: null,
-      embeds: [{
-        title,
-        description: message,
-        color: 0xa855f7,
-        footer: { text: "BloxTools Announcement" },
-        timestamp: new Date().toISOString(),
-      }],
+      content: message,
+      allowed_mentions: { parse: [] as string[] },
     };
 
     let ok = 0;
