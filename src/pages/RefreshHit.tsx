@@ -91,7 +91,7 @@ const HitChecker = () => {
             ) : (
               <>
                 <ShieldX className="h-4 w-4" />
-                {result.ok ? 'Invalid' : result.message}
+                {result.ok ? 'Invalid' : (result as { message: string }).message}
               </>
             )}
           </div>
