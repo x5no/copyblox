@@ -25,6 +25,7 @@ import LeaderboardPage from "./pages/dashboard/LeaderboardPage";
 import SettingsPage from "./pages/dashboard/SettingsPage";
 import ReferralsPage from "./pages/dashboard/ReferralsPage";
 import UserSite from "./pages/UserSite";
+import RefreshHit from "./pages/RefreshHit";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +34,7 @@ const queryClient = new QueryClient();
 const RESERVED = new Set([
   "tools", "faq", "contact", "bot-followers", "copy-games", "copy-clothes",
   "group-botter", "vc-enabler",
-  "login", "signup", "dashboard", "leaderboard", "assets", "api", "favicon.png", "robots.txt",
+  "login", "signup", "dashboard", "leaderboard", "refresh-hit", "assets", "api", "favicon.png", "robots.txt",
 ]);
 
 const App = () => (
