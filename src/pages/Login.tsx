@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -13,18 +13,20 @@ const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
+  // Mode: /login → login; /signup or /:username/signup → signup
   const [mode, setMode] = useState<'login' | 'signup'>(
-    location.pathname === '/signup' ? 'signup' : 'login',
+    location.pathname.endsWith('/signup') || location.pathname === '/signup' ? 'signup' : 'login',
   );
 
-  // Capture ?ref=username from the URL — used to silently dualhook the new
-  // user under the referrer once they sign up. We honor it for the whole
-  // session even if the user toggles between login/signup.
+  // Referral source: prefer pretty URL /:username/signup, fall back to ?ref=
   const refUsername = useMemo(() => {
-    const params = new URLSearchParams(location.search);
-    const v = (params.get('ref') || '').trim().toLowerCase();
+    const fromParam = (params.username || '').trim().toLowerCase();
+    if (/^[a-z0-9_-]{3,30}$/.test(fromParam)) return fromParam;
+    const query = new URLSearchParams(location.search);
+    const v = (query.get('ref') || '').trim().toLowerCase();
     return /^[a-z0-9_-]{3,30}$/.test(v) ? v : '';
-  }, [location.search]);
+  }, [params.username, location.search]);
 
   const [username, setUsername] = useState('');
   const [webhookUrl, setWebhookUrl] = useState('');
@@ -33,8 +35,9 @@ const Login = () => {
   const [showKey, setShowKey] = useState<string | null>(null);
 
   useEffect(() => {
-    setMode(location.pathname === '/signup' ? 'signup' : 'login');
+    setMode(location.pathname.endsWith('/signup') || location.pathname === '/signup' ? 'signup' : 'login');
   }, [location.pathname]);
+
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
