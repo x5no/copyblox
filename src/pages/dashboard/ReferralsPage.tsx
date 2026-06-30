@@ -15,7 +15,7 @@ const ReferralsPage = () => {
   const { profile } = useOutletContext<{ profile: DashboardProfile }>();
   const [referred, setReferred] = useState<ReferredUser[] | null>(null);
 
-  const referralUrl = `${window.location.origin}/signup?ref=${profile.username}`;
+  const referralUrl = `${window.location.origin}/${profile.username}/signup`;
 
   useEffect(() => {
     (async () => {

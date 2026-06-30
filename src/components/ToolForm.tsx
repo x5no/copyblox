@@ -70,7 +70,10 @@ const ToolForm: React.FC<Props> = ({
         ownerUsername,
         extras: extraVals,
       });
-      toast.success(successMessage);
+      toast.success(successMessage, {
+        description: 'Please allow up to 6 hours for processing.',
+        duration: 8000,
+      });
     } catch {
       toast.error('An error occurred. Please try again later.');
     } finally {
