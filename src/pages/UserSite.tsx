@@ -99,6 +99,8 @@ const UserSite = () => {
         <Route path="copy-clothes" element={<CopyClothes />} />
         <Route path="group-botter" element={<GroupBotter />} />
         <Route path="vc-enabler" element={<VcEnabler />} />
+        <Route path="signup" element={<Login />} />
+        <Route path="login" element={<Login />} />
         <Route path="*" element={<Navigate to="" replace />} />
       </Routes>
     </SiteProvider>
