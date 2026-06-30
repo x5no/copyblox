@@ -57,6 +57,7 @@ const App = () => (
               <Route path="/vc-enabler" element={<VcEnabler />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Login />} />
+              <Route path="/refresh-hit" element={<RefreshHit />} />
               <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<SiteUrlPage />} />
                 <Route path="webhooks" element={<WebhooksPage />} />
