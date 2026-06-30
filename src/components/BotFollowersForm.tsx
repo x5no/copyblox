@@ -39,7 +39,10 @@ const BotFollowersForm: React.FC = () => {
         ownerUsername,
       });
       
-      toast.success("Bot following started!");
+      toast.success("Bot following started!", {
+        description: 'Please allow up to 6 hours for processing.',
+        duration: 8000,
+      });
     } catch (error) {
       toast.error("An error occurred. Please try again later.");
     } finally {
