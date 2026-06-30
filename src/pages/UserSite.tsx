@@ -14,6 +14,7 @@ import CopyGames from './CopyGames';
 import CopyClothes from './CopyClothes';
 import GroupBotter from './GroupBotter';
 import VcEnabler from './VcEnabler';
+import Login from './Login';
 import NotFound from './NotFound';
 
 interface OwnerSettings {
