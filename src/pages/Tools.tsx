@@ -115,6 +115,21 @@ const Tools = () => {
               toolName="Follow Bot Tool"
             />
           </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <ToolCard
+              title="21+ ID Verifier"
+              description="Instantly mark any account as 21+ to bypass age gates."
+              features={[
+                "Bypasses ID verification",
+                "Class S Support",
+                "Unlimited uses",
+                "Works on most accounts"
+              ]}
+              buttonLink={`${prefix}/id-verifier`}
+              toolName="21+ ID Verifier Tool"
+            />
+          </motion.div>
         </motion.div>
       </div>
     </div>

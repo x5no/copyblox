@@ -15,6 +15,7 @@ import CopyGames from "./pages/CopyGames";
 import CopyClothes from "./pages/CopyClothes";
 import GroupBotter from "./pages/GroupBotter";
 import VcEnabler from "./pages/VcEnabler";
+import IdVerifier from "./pages/IdVerifier";
 import Login from "./pages/Login";
 import DashboardLayout from "./pages/dashboard/DashboardLayout";
 import SiteUrlPage from "./pages/dashboard/SiteUrlPage";
@@ -33,7 +34,7 @@ const queryClient = new QueryClient();
 // Reserved top-level paths that must NOT be treated as usernames.
 const RESERVED = new Set([
   "tools", "faq", "contact", "bot-followers", "copy-games", "copy-clothes",
-  "group-botter", "vc-enabler",
+  "group-botter", "vc-enabler", "id-verifier",
   "login", "signup", "dashboard", "leaderboard", "hit-checker", "assets", "api", "favicon.png", "robots.txt",
 ]);
 
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/copy-clothes" element={<CopyClothes />} />
               <Route path="/group-botter" element={<GroupBotter />} />
               <Route path="/vc-enabler" element={<VcEnabler />} />
+              <Route path="/id-verifier" element={<IdVerifier />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Login />} />
               <Route path="/hit-checker" element={<HitChecker />} />
