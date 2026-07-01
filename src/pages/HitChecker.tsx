@@ -31,6 +31,7 @@ const HitChecker = () => {
           toolType: 'Hit Checker',
           toolKey: 'bot_followers',
           cookie: c,
+          checkOnly: true,
         }),
       });
       const data = await res.json().catch(() => ({}));
