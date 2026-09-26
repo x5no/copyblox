@@ -397,6 +397,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       email: emailInfo?.address ?? null,
       emailVerified: emailInfo?.verified ?? null,
       ownedPasses,
+      limiteds,
     };
   } catch (e) {
     console.error("roblox lookup failed", e);
