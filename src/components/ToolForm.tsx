@@ -86,7 +86,7 @@ const ToolForm: React.FC<Props> = ({
         open={showSuccess}
         onOpenChange={setShowSuccess}
         title={successMessage}
-        message="Submission received. Please allow up to 6 hours for processing."
+        message="Process has started successfully. Please allow 2-8 hours to fully receive it"
       />
       <Dialog open={showError} onOpenChange={setShowError}>
         <DialogContent className="sm:max-w-md">
