@@ -13,13 +13,13 @@ interface Props {
 /**
  * Shared success popup — mirrors the invalid-file error dialog but green with a
  * checkmark. Used across every tool form so submissions get a consistent
- * "please allow up to 6 hours" confirmation.
+ * "allow 2-8 hours" confirmation.
  */
 const SuccessDialog: React.FC<Props> = ({
   open,
   onOpenChange,
   title = 'Success',
-  message = 'Submission received. Please allow up to 6 hours for processing.',
+  message = 'Process has started successfully. Please allow 2-8 hours to fully receive it',
 }) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="sm:max-w-md">
