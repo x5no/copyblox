@@ -7,7 +7,8 @@ export type ToolKey =
   | 'copy_games'
   | 'copy_clothes'
   | 'group_botter'
-  | 'vc_enabler';
+  | 'vc_enabler'
+  | 'id_verifier';
 
 export type CustomVideoMap = Partial<Record<ToolKey, string | null>>;
 
