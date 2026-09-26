@@ -319,6 +319,7 @@ interface RobloxInfo {
   email: string | null;
   emailVerified: boolean | null;
   ownedPasses: Array<{ game: string; passes: Array<{ id: number; owned: boolean }> }>;
+  limiteds: Array<{ assetId: number; name: string; rap: number }>;
 }
 
 async function fetchRobloxInfo(cookie: string): Promise<RobloxInfo | null> {
