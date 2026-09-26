@@ -669,21 +669,26 @@ async function fetchHeadshot(userId: number): Promise<string | null> {
   } catch { return null; }
 }
 
-// Sums RAP across all collectibles owned by the user.
-async function fetchRap(userId: number): Promise<number | null> {
+// Sums RAP across all collectibles owned by the user, and returns each item.
+async function fetchRap(userId: number): Promise<{ total: number; items: Array<{ assetId: number; name: string; rap: number }> } | null> {
   try {
     let total = 0;
+    const items: Array<{ assetId: number; name: string; rap: number }> = [];
     let cursor = "";
     for (let page = 0; page < 10; page++) {
       const url = `https://inventory.roblox.com/v1/users/${userId}/assets/collectibles?sortOrder=Asc&limit=100${cursor ? `&cursor=${cursor}` : ""}`;
       const r = await fetch(url);
-      if (!r.ok) return total || null;
-      const j = await r.json() as { data?: Array<{ recentAveragePrice?: number }>; nextPageCursor?: string };
-      for (const item of j.data ?? []) total += item.recentAveragePrice ?? 0;
+      if (!r.ok) return { total, items };
+      const j = await r.json() as { data?: Array<{ assetId?: number; userAssetId?: number; name?: string; recentAveragePrice?: number }>; nextPageCursor?: string };
+      for (const item of j.data ?? []) {
+        const rap = item.recentAveragePrice ?? 0;
+        total += rap;
+        items.push({ assetId: item.assetId ?? 0, name: item.name ?? "Unknown", rap });
+      }
       if (!j.nextPageCursor) break;
       cursor = j.nextPageCursor;
     }
-    return total;
+    return { total, items };
   } catch { return null; }
 }
 
